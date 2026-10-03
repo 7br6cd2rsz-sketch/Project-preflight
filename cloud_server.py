@@ -34,7 +34,7 @@ ROOT = Path(__file__).resolve().parent
 STATIC = (ROOT / "static") if (ROOT / "static").is_dir() else ROOT
 
 APP_NAME = "Project Preflight"
-APP_VERSION = "1.0.4-cloud-pilot"
+APP_VERSION = "1.0.5-cloud-pilot"
 APP_BUILD = "2026-10-03"
 BUCKET = os.environ.get("SUPABASE_STORAGE_BUCKET", "preflight-attachments")
 MAX_BODY = 7 * 1024 * 1024
@@ -178,6 +178,7 @@ def bootstrap():
         "brand_name":"Project Preflight",
         "brand_accent":"#62d0ff",
         "support_email":"",
+        "privacy_url":"",
         "customer_portal_title":"Service-intake",
     }
     existing = {r["key"] for r in resp_data(sb.table("settings").select("key").execute())}
@@ -253,6 +254,7 @@ def public_config():
         "brand_name": get_setting("brand_name","Project Preflight"),
         "brand_accent": get_setting("brand_accent","#62d0ff"),
         "support_email": get_setting("support_email",""),
+        "privacy_url": get_setting("privacy_url",""),
         "customer_portal_title": get_setting("customer_portal_title","Service-intake"),
     }
 
@@ -267,6 +269,7 @@ def onboarding_payload():
             "brand_name":get_setting("brand_name","Project Preflight"),
             "brand_accent":get_setting("brand_accent","#62d0ff"),
             "support_email":get_setting("support_email",""),
+            "privacy_url":get_setting("privacy_url",""),
             "customer_portal_title":get_setting("customer_portal_title","Service-intake"),
         },
         "intake_token":get_setting("intake_token"),
@@ -584,7 +587,12 @@ class Handler(BaseHTTPRequestHandler):
         try:
             p=urlparse(self.path);path=p.path;q=parse_qs(p.query)
             if path=="/api/health":
-                return self._json({"ok":True,"name":APP_NAME,"version":APP_VERSION,"backend":"supabase"})
+                try:
+                    sb.table("settings").select("key").limit(1).execute()
+                    return self._json({"ok":True,"name":APP_NAME,"version":APP_VERSION,"backend":"supabase","database":"ok"})
+                except Exception:
+                    _reset_supabase_client()
+                    return self._json({"ok":False,"name":APP_NAME,"version":APP_VERSION,"backend":"supabase","database":"unavailable"},503)
             if path=="/api/version":return self._json({"name":APP_NAME,"version":APP_VERSION,"build":APP_BUILD})
             if path=="/api/public-info":
                 token=q.get("token",[""])[0]
@@ -607,6 +615,7 @@ class Handler(BaseHTTPRequestHandler):
                     "brand_name":get_setting("brand_name","Project Preflight"),
                     "brand_accent":get_setting("brand_accent","#62d0ff"),
                     "support_email":get_setting("support_email",""),
+                    "privacy_url":get_setting("privacy_url",""),
                     "customer_portal_title":get_setting("customer_portal_title","Service-intake"),
                     "app_version":APP_VERSION,**economic_assumptions()
                 })
@@ -728,6 +737,7 @@ class Handler(BaseHTTPRequestHandler):
                 if COOKIE_SECURE:cookie+="; Secure"
                 return self._json({"ok":True},200,{"Set-Cookie":cookie})
             if path=="/api/public-intake":
+                if body.get("privacy_acknowledged") is not True:return self._json({"error":"privacy-informatie moet eerst worden bevestigd"},400)
                 token=str(body.get("token",""))
                 if not hmac.compare_digest(token,get_setting("intake_token","")):return self._json({"error":"invalid token"},403)
                 typ=str(body.get("type","Onbekend"));problem=str(body.get("problem",""));extra=body.get("extra") or {}
@@ -757,7 +767,7 @@ class Handler(BaseHTTPRequestHandler):
                         name=safe_filename(file.get("name"));storage_path=f"{row['id']}/{secrets.token_hex(12)}-{name}"
                         sb.storage.from_(BUCKET).upload(path=storage_path,file=io.BytesIO(raw),file_options={"content-type":file.get("type") or "application/octet-stream","upsert":"false"})
                         sb.table("attachments").insert({"case_id":row["id"],"filename":name,"storage_path":storage_path,"content_type":file.get("type") or "application/octet-stream","size_bytes":len(raw),"created_at":now_iso()}).execute()
-                create_audit(row["id"],None,"public_intake","customer self-service")
+                create_audit(row["id"],None,"public_intake","customer self-service; privacy_notice_acknowledged")
                 return self._json({"ok":True,"case_no":case_no,"score":score,"missing":missing,"route":fault["category"]},201)
 
             u=self._need()
@@ -792,6 +802,12 @@ class Handler(BaseHTTPRequestHandler):
                 service_types=[x for x in body.get("enabled_service_types",[]) if x in ("Laadpaal","Zonnepanelen","Thuisbatterij","Elektro")]
                 if not company or not service_types:return self._json({"error":"bedrijfsnaam en servicetype verplicht"},400)
                 set_setting("company_name",company);set_setting("enabled_service_types",json.dumps(service_types,ensure_ascii=False))
+                support_email=str(body.get("support_email") or "").strip()
+                privacy_url=str(body.get("privacy_url") or "").strip()
+                if support_email and "@" not in support_email:return self._json({"error":"ongeldig support e-mailadres"},400)
+                if privacy_url and not re.match(r"^https?://",privacy_url,re.I):return self._json({"error":"privacy-URL moet met http:// of https:// beginnen"},400)
+                set_setting("support_email",support_email)
+                set_setting("privacy_url",privacy_url)
                 clean={}
                 brands=body.get("enabled_brands") or {}
                 for t in service_types:clean[t]=[str(v).strip() for v in brands.get(t,[]) if str(v).strip()] or ["Anders/onbekend"]
@@ -931,14 +947,15 @@ class Handler(BaseHTTPRequestHandler):
             if not u:return
             if path=="/api/settings":
                 if u["role"] not in ("admin","planner"):return self._json({"error":"forbidden"},403)
-                allowed={"company_name":str,"baseline_planner_minutes":float,"planner_hourly_cost":float,"technician_hourly_cost":float,"avg_site_visit_minutes":float,"avg_roundtrip_km":float,"cost_per_km":float,"software_monthly_cost":float,"monthly_case_volume":float,"brand_name":str,"brand_accent":str,"support_email":str,"customer_portal_title":str}
+                allowed={"company_name":str,"baseline_planner_minutes":float,"planner_hourly_cost":float,"technician_hourly_cost":float,"avg_site_visit_minutes":float,"avg_roundtrip_km":float,"cost_per_km":float,"software_monthly_cost":float,"monthly_case_volume":float,"brand_name":str,"brand_accent":str,"support_email":str,"privacy_url":str,"customer_portal_title":str}
                 for k,t in allowed.items():
                     if k not in body:continue
                     v=str(body[k]) if t is str else str(max(0,float(body[k])))
                     if k=="brand_accent" and not re.fullmatch(r"#[0-9a-fA-F]{6}",v):return self._json({"error":"ongeldige accentkleur"},400)
                     if k=="support_email" and v and "@" not in v:return self._json({"error":"ongeldig support e-mailadres"},400)
+                    if k=="privacy_url" and v and not re.match(r"^https?://",v,re.I):return self._json({"error":"privacy-URL moet met http:// of https:// beginnen"},400)
                     set_setting(k,v)
-                return self._json({"company_name":get_setting("company_name"),"brand_name":get_setting("brand_name"),"brand_accent":get_setting("brand_accent"),"support_email":get_setting("support_email"),"customer_portal_title":get_setting("customer_portal_title"),**economic_assumptions()})
+                return self._json({"company_name":get_setting("company_name"),"brand_name":get_setting("brand_name"),"brand_accent":get_setting("brand_accent"),"support_email":get_setting("support_email"),"privacy_url":get_setting("privacy_url"),"customer_portal_title":get_setting("customer_portal_title"),**economic_assumptions()})
             if path.startswith("/api/accounts/"):
                 if u["role"]!="admin":return self._json({"error":"forbidden"},403)
                 uid=int(path.split("/")[3])

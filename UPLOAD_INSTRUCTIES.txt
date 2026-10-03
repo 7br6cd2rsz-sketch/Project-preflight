@@ -1,12 +1,14 @@
-PROJECT PREFLIGHT — GITHUB UPLOAD
+Project Preflight hardening 1.0.5
 
-Pak deze ZIP uit.
-Upload ALLES wat in deze map staat naar de hoofdmap van de GitHub-repository.
+Vervang in de hoofdmap van GitHub deze vier bestanden:
+- cloud_server.py
+- app.js
+- index.html
+- intake.html
 
-Veiligheid:
-- Er staat GEEN echte Supabase secret key in dit pakket.
-- .env.example bevat alleen placeholders.
-- Geen .git-map, caches of lokale databasebestanden zijn opgenomen.
-
-Na upload moeten cloud_server.py, requirements.txt, render.yaml en de map static
-direct zichtbaar zijn in de hoofdmap van de repository.
+Deze release voegt toe:
+- database-aware /api/health
+- privacy-informatie en verplichte bevestiging bij publieke intake
+- configureerbare privacyverklaring-URL
+- support e-mail in onboarding
+- auditregistratie dat de privacy-informatie is bevestigd
