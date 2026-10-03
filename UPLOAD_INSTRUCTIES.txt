@@ -1,0 +1,12 @@
+PROJECT PREFLIGHT — GITHUB UPLOAD
+
+Pak deze ZIP uit.
+Upload ALLES wat in deze map staat naar de hoofdmap van de GitHub-repository.
+
+Veiligheid:
+- Er staat GEEN echte Supabase secret key in dit pakket.
+- .env.example bevat alleen placeholders.
+- Geen .git-map, caches of lokale databasebestanden zijn opgenomen.
+
+Na upload moeten cloud_server.py, requirements.txt, render.yaml en de map static
+direct zichtbaar zijn in de hoofdmap van de repository.

@@ -1,0 +1,197 @@
+<!doctype html><html lang="nl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#07111f"><title>Project Preflight Pilot Pro</title>
+<style>
+:root{--bg:#06101c;--panel:#0e1a2b;--line:#243b58;--text:#edf6ff;--muted:#8da4ba;--accent:#62d0ff;--good:#78e4aa;--warn:#ffd166;--danger:#ff8195}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at 10% 0,#0d2946,#06101c 45%);color:var(--text);font-family:Inter,system-ui,sans-serif}button,input,textarea,select{font:inherit}.hidden{display:none!important}
+.login{min-height:100vh;display:grid;place-items:center;padding:20px}.loginbox{width:min(440px,95vw);background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:22px}.loginbox h1{margin:5px 0}.sub{color:var(--muted);font-size:12px}.field{margin:12px 0}.field label{display:block;color:var(--muted);font-size:10px;margin-bottom:5px}.field input,.field textarea,.field select{width:100%;padding:10px;border:1px solid var(--line);border-radius:10px;background:#091526;color:#fff}.btn{border:1px solid var(--line);border-radius:10px;background:#13233a;color:#fff;padding:9px 12px;cursor:pointer}.primary{background:linear-gradient(135deg,#41caf8,#7193ff);color:#06111b;border:0;font-weight:800}.good{color:var(--good)}.warn{color:var(--warn)}
+.app{display:grid;grid-template-columns:255px 1fr;min-height:100vh}aside{background:#050d18;border-right:1px solid var(--line);padding:16px 12px;position:sticky;top:0;height:100vh}.brand{padding:8px;font-weight:800}.brand small{display:block;color:var(--muted);font-weight:400;margin-top:3px}nav button{display:block;width:100%;border:0;background:transparent;color:#bdcada;text-align:left;padding:11px 12px;border-radius:9px;margin:3px 0;cursor:pointer}nav button.active,nav button:hover{background:#15263e;color:#fff}.side{position:absolute;bottom:14px;left:12px;right:12px;color:var(--muted);font-size:10px}
+main{padding:24px 28px 60px}.top{display:flex;justify-content:space-between;align-items:flex-start;gap:15px}.eyebrow{color:var(--accent);text-transform:uppercase;letter-spacing:.15em;font-size:10px}h2{font-size:28px;margin:4px 0}.grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:18px}.card{background:var(--panel);border:1px solid var(--line);border-radius:15px;padding:15px}.metric small{color:var(--muted)}.metric b{display:block;font-size:26px;margin-top:7px}
+.table{padding:0;overflow:hidden;margin-top:18px}.row{display:grid;grid-template-columns:1.35fr 1fr .9fr .7fr .7fr;gap:10px;padding:13px 15px;border-bottom:1px solid var(--line);font-size:12px;align-items:center}.row.head{color:var(--muted);font-size:10px;text-transform:uppercase}.row.case{cursor:pointer}.row.case:hover{background:#13243a}.pill{display:inline-block;border:1px solid var(--line);border-radius:99px;padding:4px 8px;font-size:10px}.grid2{display:grid;grid-template-columns:1.2fr .8fr;gap:13px}.section{margin-top:18px}.kv{display:grid;grid-template-columns:125px 1fr;gap:7px;font-size:12px;margin:8px 0}.kv span:first-child{color:var(--muted)}.check{border:1px solid var(--line);background:#091526;border-radius:9px;padding:9px;margin:6px 0;font-size:11px}.note,.attachment{border:1px solid var(--line);background:#091526;border-radius:10px;padding:10px;margin:7px 0;font-size:11px}.note small,.attachment small{color:var(--muted)}.modal{position:fixed;inset:0;background:rgba(0,0,0,.68);display:grid;place-items:center;padding:18px}.modalbox{width:min(720px,96vw);max-height:92vh;overflow:auto;background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:18px}.msg{margin-top:10px;font-size:11px;color:var(--warn)}.linkbox{word-break:break-all;background:#091526;border:1px solid var(--line);padding:10px;border-radius:9px;font-size:11px}
+@media(max-width:900px){.app{grid-template-columns:1fr}aside{height:auto;position:static}nav{display:flex;overflow:auto}nav button{width:auto;white-space:nowrap}.side{display:none}main{padding:16px 12px 60px}.grid4{grid-template-columns:repeat(2,1fr)}.grid2{grid-template-columns:1fr}.row{grid-template-columns:1.4fr .9fr .7fr}.row>*:nth-child(4),.row>*:nth-child(5){display:none}}
+@media(max-width:520px){.grid4{grid-template-columns:1fr}.top{flex-direction:column}.row{grid-template-columns:1.4fr .8fr}.row>*:nth-child(3){display:none}}
+
+@media print{
+ body{background:white!important;color:#111!important}
+ aside,.top button,#login{display:none!important}
+ .app{display:block!important}
+ main{padding:0!important}
+ main>section{display:none!important}
+ #reportView{display:block!important}
+ .card{background:white!important;color:#111!important;box-shadow:none!important;border:1px solid #ccc!important}
+ .sub,.kv span:first-child{color:#555!important}
+ .eyebrow{color:#2563eb!important}
+ a{color:#111!important;text-decoration:none!important}
+}
+</style></head><body>
+<div id="login" class="login"><div class="loginbox"><div class="eyebrow">Project Preflight V10</div><h1>Pilot Pro</h1><div class="sub">Echte multi-user LAN-pilot met klantintake en meetbare KPI's.</div><div class="field"><label>E-mail</label><input id="email" value="planner@preflight.local"></div><div class="field"><label>Wachtwoord</label><input id="password" type="password" value="Pilot2026!"></div><button class="btn primary" onclick="loginNow()">Inloggen</button><div id="loginMsg" class="msg"></div></div></div>
+<div id="app" class="app hidden"><aside><div class="brand">Project Preflight<small id="who"></small></div><nav><button id="onboardingNav" data-view="onboarding">Onboarding</button><button class="active" data-view="dashboard">Dashboard</button><button data-view="cases">Cases</button><button data-view="workorders">Werkorders</button><button id="metricsNav" data-view="metrics">Pilot-KPI's</button><button id="pilotNav" data-view="pilot">Pilotbeheer</button><button id="reportNav" data-view="report">Directierapport</button><button id="settingsNav" data-view="settings">Klantintake</button><button id="productNav" data-view="product">Productbeheer</button><button id="teamNav" data-view="team">Team</button><button id="auditNav" data-view="audit">Audit</button></nav><div class="side">Lokale server · SQLite · alleen eigen netwerk</div></aside><main>
+
+<section id="onboardingView" class="hidden">
+ <div class="top"><div><div class="eyebrow">Launch Partner Setup</div><h2>Onboarding-wizard</h2><div class="sub">Configureer een installatiebedrijf en start de pilot vanuit één scherm.</div></div></div>
+ <div class="card section">
+  <div class="eyebrow">Stap <span id="obStepNo">1</span> van 5</div>
+  <div id="obStep1">
+   <h3>1. Bedrijf & servicefocus</h3>
+   <div class="field"><label>Bedrijfsnaam</label><input id="obCompany" value="Demo Installatietechniek"></div>
+   <div class="field"><label>Servicetypen in de pilot</label>
+    <label><input type="checkbox" class="obService" value="Laadpaal" checked> Laadpaal</label><br>
+    <label><input type="checkbox" class="obService" value="Zonnepanelen" checked> Zonnepanelen</label><br>
+    <label><input type="checkbox" class="obService" value="Thuisbatterij"> Thuisbatterij</label><br>
+    <label><input type="checkbox" class="obService" value="Elektro"> Elektro</label>
+   </div>
+  </div>
+
+  <div id="obStep2" class="hidden">
+   <h3>2. Merken</h3>
+   <div class="sub">Selecteer waar de pilot op focust. De klantintake gebruikt daarna alleen deze keuzes.</div>
+   <div id="obBrands" class="section"></div>
+  </div>
+
+  <div id="obStep3" class="hidden">
+   <h3>3. Team</h3>
+   <div class="sub">Optioneel. Demo-accounts blijven beschikbaar.</div>
+   <div class="grid2">
+    <div class="card">
+     <h3>Planner</h3>
+     <div class="field"><label>Naam</label><input id="obPlannerName" placeholder="bijv. Lisa"></div>
+     <div class="field"><label>E-mail</label><input id="obPlannerEmail" type="email"></div>
+     <div class="field"><label>Tijdelijk wachtwoord</label><input id="obPlannerPassword" type="password" placeholder="min. 8 tekens"></div>
+    </div>
+    <div class="card">
+     <h3>Monteur</h3>
+     <div class="field"><label>Naam</label><input id="obTechName" placeholder="bijv. Mark"></div>
+     <div class="field"><label>E-mail</label><input id="obTechEmail" type="email"></div>
+     <div class="field"><label>Tijdelijk wachtwoord</label><input id="obTechPassword" type="password" placeholder="min. 8 tekens"></div>
+    </div>
+   </div>
+  </div>
+
+  <div id="obStep4" class="hidden">
+   <h3>4. Businesscase-aannames</h3>
+   <div class="grid2">
+    <div>
+     <div class="field"><label>Baseline planner-/intaketijd per case (min)</label><input id="obBaselinePlanner" type="number" value="13"></div>
+     <div class="field"><label>Planner kostwaarde (€ / uur)</label><input id="obPlannerRate" type="number" value="40"></div>
+     <div class="field"><label>Monteur kostwaarde (€ / uur)</label><input id="obTechRate" type="number" value="55"></div>
+     <div class="field"><label>Gemiddeld locatiebezoek (min)</label><input id="obVisitMinutes" type="number" value="90"></div>
+    </div>
+    <div>
+     <div class="field"><label>Gemiddelde retourkilometers</label><input id="obKm" type="number" value="35"></div>
+     <div class="field"><label>Kostprijs per km (€)</label><input id="obKmCost" type="number" step="0.01" value="0.35"></div>
+     <div class="field"><label>Referentie softwareprijs (€ / maand)</label><input id="obSoftware" type="number" value="299"></div>
+     <div class="field"><label>Cases per maand</label><input id="obVolume" type="number" value="150"></div>
+    </div>
+   </div>
+  </div>
+
+  <div id="obStep5" class="hidden">
+   <h3>5. Nulmeting & pilotdoelen</h3>
+   <div class="grid2">
+    <div>
+     <div class="field"><label>Pilotnaam</label><input id="obPilotName" value="Launch Partner Pilot"></div>
+     <div class="field"><label>Startdatum</label><input id="obStart" type="date"></div>
+     <div class="field"><label>Einddatum</label><input id="obEnd" type="date"></div>
+     <div class="field"><label>Nulmeting first-time-fix (%)</label><input id="obBaseFTF" type="number" value="70"></div>
+     <div class="field"><label>Nulmeting tweede bezoek (%)</label><input id="obBaseSecond" type="number" value="20"></div>
+     <div class="field"><label>Nulmeting remote opgelost (%)</label><input id="obBaseRemote" type="number" value="5"></div>
+    </div>
+    <div>
+     <div class="field"><label>Doel planner-/voorbereidingstijd (min)</label><input id="obTargetPlanner" type="number" value="7"></div>
+     <div class="field"><label>Doel first-time-fix (%)</label><input id="obTargetFTF" type="number" value="80"></div>
+     <div class="field"><label>Doel tweede bezoek (%)</label><input id="obTargetSecond" type="number" value="12"></div>
+     <div class="field"><label>Doel remote opgelost (%)</label><input id="obTargetRemote" type="number" value="10"></div>
+     <div class="field"><label>Scope/notitie</label><textarea id="obPilotNotes">6-weekse pilot met technische servicecases.</textarea></div>
+    </div>
+   </div>
+  </div>
+
+  <div id="obResult" class="hidden"></div>
+  <div id="obControls" class="section" style="display:flex;justify-content:space-between;gap:10px">
+   <button id="obBack" class="btn" onclick="obPrev()">← Vorige</button>
+   <button id="obNext" class="btn primary" onclick="obNext()">Volgende →</button>
+  </div>
+ </div>
+</section>
+<section id="dashboardView"><div class="top"><div><div class="eyebrow">Local multi-user pilot</div><h2>Dashboard</h2><div class="sub">Planner, monteur en klantintake in één gratis lokale pilot.</div></div><button id="newBtn" class="btn primary" onclick="openNew()">+ Nieuwe case</button></div><div class="grid4"><div class="card metric"><small>Cases</small><b id="mCases">0</b></div><div class="card metric"><small>Review</small><b id="mReview">0</b></div><div class="card metric"><small>Ingepland</small><b id="mScheduled">0</b></div><div class="card metric"><small>Gem. readiness</small><b id="mReady">0%</b></div></div><div id="dashTable" class="card table"></div></section>
+<section id="casesView" class="hidden"><div class="top"><div><div class="eyebrow">Cases</div><h2>Servicecases</h2></div><button id="newBtn2" class="btn primary" onclick="openNew()">+ Nieuwe case</button></div><div id="casesTable" class="card table"></div></section>
+<section id="workordersView" class="hidden"><div class="top"><div><div class="eyebrow">Field</div><h2>Werkorders</h2><div class="sub">Monteurweergave: alleen toegewezen cases bij technician-login.</div></div></div><div id="workorders"></div></section>
+<section id="caseView" class="hidden"><div class="top"><button class="btn" onclick="show('cases')">← Terug</button><button id="saveBtn" class="btn primary" onclick="saveCase()">Opslaan</button></div><div class="grid2 section"><div><div id="caseMain" class="card"></div><div class="card section"><h3>Voor vertrek</h3><div id="prep"></div></div><div class="card section"><h3>Notities</h3><div id="notes"></div><div class="field"><textarea id="noteText" placeholder="Interne notitie..."></textarea></div><button class="btn" onclick="addNote()">Notitie toevoegen</button></div><div class="card section"><h3>Bijlagen</h3><div id="attachments"></div><div class="field"><input id="fileInput" type="file" accept="image/*,.pdf"></div><button class="btn" onclick="uploadFile()">Upload</button></div><div class="card section"><h3>First-time-fix outcome</h3><div id="outcomeCurrent" class="sub"></div><div class="field"><label><input id="oResolved" type="checkbox"> In één locatiebezoek opgelost</label></div><div class="field"><label><input id="oRemote" type="checkbox"> Volledig remote opgelost</label></div><div class="field"><label><input id="oSecond" type="checkbox"> Tweede bezoek nodig</label></div><div class="field"><label>Welke informatie ontbrak vooraf?</label><input id="oMissingInfo" placeholder="bijv. foutcode of installatietekening"></div><div class="field"><label>Welk materiaal/onderdeel ontbrak?</label><input id="oMissingMaterial" placeholder="alleen indien van toepassing"></div><div class="field"><label><input id="oWrongSkill" type="checkbox"> Verkeerde expertise/monteur ingepland</label></div><div class="field"><label><input id="oPreventable" type="checkbox"> Tweede rit waarschijnlijk voorkombaar met betere preflight</label></div><div class="field"><label>Werkelijke planner-/voorbereidingstijd voor deze case (minuten)</label><input id="oPlannerMinutes" type="number" min="0" step="0.5" placeholder="bijv. 5"></div><div class="field"><label>Korte evaluatie</label><textarea id="oNotes"></textarea></div><button class="btn primary" onclick="saveOutcome()">Outcome opslaan</button></div></div><div><div id="caseSide" class="card"></div><div class="card section"><h3>Toewijzing</h3><div class="field"><select id="assignedTo"></select></div><button id="assignBtn" class="btn" onclick="assignCase()">Toewijzen</button></div></div></div></section>
+<section id="metricsView" class="hidden"><div class="top"><div><div class="eyebrow">Pilotmeting</div><h2>KPI's</h2></div></div><div class="grid4"><div class="card metric"><small>Totaal</small><b id="kTotal">0</b></div><div class="card metric"><small>Klantintakes</small><b id="kPublic">0</b></div><div class="card metric"><small>Gem. intake</small><b id="kIntake">0s</b></div><div class="card metric"><small>Compleet bij intake</small><b id="kComplete">0%</b></div></div><div class="grid4 section"><div class="card metric"><small>First-time-fix</small><b id="kFTF">0%</b></div><div class="card metric"><small>Tweede bezoek</small><b id="kSecond">0%</b></div><div class="card metric"><small>Voorkombare tweede rit</small><b id="kPreventable">0%</b></div><div class="card metric"><small>Remote opgelost</small><b id="kRemote">0%</b></div></div><div class="card section"><div class="kv"><span>Planbaar %</span><b id="kScheduled">0%</b></div><div class="kv"><span>Outcomes geregistreerd</span><b id="kOutcomes">0</b></div><div class="sub">De FTF-percentages worden alleen berekend op cases waarvoor een outcome is geregistreerd.</div></div>
+<div class="section"><div class="eyebrow">Economische impact</div><h2 style="font-size:22px">Businesscase</h2><div class="sub">Gemeten besparing en geschatte waarde staan bewust apart.</div></div>
+<div class="grid4 section">
+ <div class="card metric"><small>Gemeten plannerwaarde</small><b id="ePlanner">€0</b></div>
+ <div class="card metric"><small>Geschatte remote ritwaarde</small><b id="eRemote">€0</b></div>
+ <div class="card metric"><small>Vermijdbare verspilling gezien</small><b id="eWaste">€0</b></div>
+ <div class="card metric"><small>Projected netto / maand</small><b id="eNet">€0</b></div>
+</div>
+<div class="grid2 section">
+ <div class="card"><h3>Aannames — transparant en aanpasbaar</h3>
+  <div class="field"><label>Baseline planner-/intaketijd per case (min)</label><input id="aBaselinePlanner" type="number" step="0.5"></div>
+  <div class="field"><label>Planner/backoffice kostwaarde (€ / uur)</label><input id="aPlannerRate" type="number" step="1"></div>
+  <div class="field"><label>Monteur kostwaarde (€ / uur)</label><input id="aTechRate" type="number" step="1"></div>
+  <div class="field"><label>Gemiddelde duur extra locatiebezoek (min)</label><input id="aVisitMinutes" type="number" step="5"></div>
+  <div class="field"><label>Gemiddelde retourkilometers per extra rit</label><input id="aKm" type="number" step="1"></div>
+  <div class="field"><label>Kostprijs per km (€)</label><input id="aKmCost" type="number" step="0.01"></div>
+  <div class="field"><label>Referentie softwareprijs (€ / maand)</label><input id="aSoftware" type="number" step="1"></div>
+  <div class="field"><label>Cases per maand voor projectie</label><input id="aVolume" type="number" step="1"></div>
+  <button class="btn primary" onclick="saveEconomicAssumptions()">Aannames opslaan</button>
+ </div>
+ <div class="card"><h3>Berekening</h3>
+  <div class="kv"><span>Planner-minuten bespaard</span><b id="ePlannerMinutes">0</b></div>
+  <div class="kv"><span>Remote opgeloste cases</span><b id="eRemoteCount">0</b></div>
+  <div class="kv"><span>Voorkombare tweede bezoeken gezien</span><b id="ePreventableCount">0</b></div>
+  <div class="kv"><span>Projected bruto / maand</span><b id="eGross">€0</b></div>
+  <div class="kv"><span>Software referentie</span><b id="eSoftware">€0</b></div>
+  <div class="kv"><span>Break-even</span><b id="eBreakEven">—</b></div>
+  <div class="sub section"><b>Gemeten:</b> plannerwaarde gebruikt alleen cases waar werkelijke plannertijd is geregistreerd.<br><br><b>Geschat:</b> remote ritwaarde gebruikt instelbare tijd-, monteur- en kilometerkosten.<br><br><b>Verspilling:</b> voorkombare tweede ritten zijn opportunity loss, niet gerealiseerde besparing.</div>
+ </div>
+</div></section>
+
+
+<section id="pilotView" class="hidden">
+ <div class="top"><div><div class="eyebrow">Pilotbeheer</div><h2>Voor versus na Preflight</h2><div class="sub">Leg nulmeting, doelen, looptijd en voortgang van een launch partner vast.</div></div><div><button class="btn" onclick="takePilotSnapshot()">Snapshot vandaag</button> <button class="btn primary" onclick="closePilot()">Pilot afsluiten</button></div></div>
+ <div id="pilotNoActive" class="card hidden">
+  <h3>Start een nieuwe pilot</h3>
+  <div class="grid2">
+   <div>
+    <div class="field"><label>Pilotnaam</label><input id="pName" value="Launch Partner Pilot"></div>
+    <div class="field"><label>Startdatum</label><input id="pStart" type="date"></div>
+    <div class="field"><label>Einddatum</label><input id="pEnd" type="date"></div>
+    <div class="field"><label>Nulmeting planner-/voorbereidingstijd (min)</label><input id="pBasePlanner" type="number" step="0.5" value="13"></div>
+    <div class="field"><label>Nulmeting first-time-fix (%)</label><input id="pBaseFTF" type="number" step="0.1" value="70"></div>
+    <div class="field"><label>Nulmeting tweede bezoek (%)</label><input id="pBaseSecond" type="number" step="0.1" value="20"></div>
+    <div class="field"><label>Nulmeting remote opgelost (%)</label><input id="pBaseRemote" type="number" step="0.1" value="5"></div>
+   </div>
+   <div>
+    <div class="field"><label>Doel planner-/voorbereidingstijd (min)</label><input id="pTargetPlanner" type="number" step="0.5" value="7"></div>
+    <div class="field"><label>Doel first-time-fix (%)</label><input id="pTargetFTF" type="number" step="0.1" value="80"></div>
+    <div class="field"><label>Doel tweede bezoek (%)</label><input id="pTargetSecond" type="number" step="0.1" value="12"></div>
+    <div class="field"><label>Doel remote opgelost (%)</label><input id="pTargetRemote" type="number" step="0.1" value="10"></div>
+    <div class="field"><label>Notities / scope</label><textarea id="pNotes">Pilot op servicecases laadinfra en PV.</textarea></div>
+   </div>
+  </div>
+  <button class="btn primary" onclick="startPilot()">Pilot starten</button>
+ </div>
+ <div id="pilotActive" class="hidden">
+  <div class="grid4">
+   <div class="card metric"><small>Voortgang</small><b id="pProgress">0%</b></div>
+   <div class="card metric"><small>Dagen resterend</small><b id="pRemaining">0</b></div>
+   <div class="card metric"><small>Outcomes</small><b id="pOutcomes">0</b></div>
+   <div class="card metric"><small>Projected netto / maand</small><b id="pProjectedNet">€0</b></div>
+  </div>
+  <div class="grid2 section">
+   <div class="card"><h3>Voor versus nu</h3><div id="pilotCompare"></div></div>
+   <div class="card"><h3>Doelen</h3><div id="pilotGoals"></div></div>
+  </div>
+  <div class="card section"><h3>Snapshots</h3><div id="pilotSnapshots"></div></div>
+ </div>
+</section>
+<section id="reportView" class="hidden">
+ <div class="top"><div><div class="eyebrow">Managementrapportage</div><h2>Directierapport</h2><div class="sub">Automatische pilotsamenvatting met datakwaliteit, KPI's en financiële impact.</div></div><div><button class="btn" onclick="loadReport()">Vernieuwen</button> <button class="btn primary" onclick="printReport()">Print / PDF</button></div></div>
+ <div id="reportContainer"></div>
+</section>
+<section id="settingsView" class="hidden"><div class="top"><div><div class="eyebrow">Klantzijde</div><h2>Self-service intake</h2></div></div><div class="card"><div class="sub">Deel deze link met een testklant op hetzelfde wifi-netwerk:</div><div id="intakeLink" class="linkbox section"></div><div class="section"><button class="btn" onclick="copyIntakeLink()">Link kopiëren</button> <button class="btn primary" onclick="window.open(intakeLink.textContent,'_blank')">Open intake</button></div></div></section>
+<section id="productView" class="hidden"><div class="top"><div><div class="eyebrow">Pilot v1.0</div><h2>Productbeheer</h2><div class="sub">Branding, accounts, export en veilige pilot-reset.</div></div><div><span id="versionBadge" class="pill"></span></div></div><div class="grid2 section"><div class="card"><h3>Branding & klantportaal</h3><div class="field"><label>Productnaam / label</label><input id="pbBrandName"></div><div class="field"><label>Accentkleur</label><input id="pbAccent" type="text" placeholder="#62d0ff"></div><div class="field"><label>Support e-mail</label><input id="pbSupportEmail" type="email"></div><div class="field"><label>Titel klantportaal</label><input id="pbPortalTitle"></div><button class="btn primary" onclick="saveBranding()">Branding opslaan</button></div><div class="card"><h3>Eigen wachtwoord</h3><div class="field"><label>Huidig wachtwoord</label><input id="pwCurrent" type="password"></div><div class="field"><label>Nieuw wachtwoord</label><input id="pwNew" type="password" placeholder="min. 10 tekens"></div><button class="btn" onclick="changeOwnPassword()">Wachtwoord wijzigen</button></div></div><div class="card section" id="accountAdminCard"><h3>Accountbeheer</h3><div id="accountList"></div><div class="section grid2"><div><div class="field"><label>Naam</label><input id="accName"></div><div class="field"><label>E-mail</label><input id="accEmail" type="email"></div></div><div><div class="field"><label>Rol</label><select id="accRole"><option value="planner">Planner</option><option value="technician">Monteur</option><option value="admin">Admin</option></select></div><div class="field"><label>Tijdelijk wachtwoord</label><input id="accPassword" type="password" placeholder="min. 8 tekens"></div></div></div><button class="btn primary" onclick="createAccount()">Account toevoegen</button></div><div class="grid2 section"><div class="card"><h3>Export / backup</h3><div class="sub">Operationele JSON-export zonder wachtwoordhashes en zonder bestandbytes.</div><div class="section"><button class="btn primary" onclick="downloadOperationalExport()">JSON-export downloaden</button></div></div><div class="card"><h3>Pilot reset</h3><div class="sub">Verwijdert cases, notities, bijlagen, audit en pilotdata. Accounts en bedrijfsinstellingen blijven bestaan.</div><div class="field"><label>Typ exact: RESET PILOT DATA</label><input id="resetConfirm"></div><button class="btn" onclick="resetPilotData()">Pilotdata resetten</button></div></div></section><section id="teamView" class="hidden"><div class="top"><div><div class="eyebrow">Team</div><h2>Gebruikers</h2></div></div><div id="teamList" class="card"></div></section>
+<section id="auditView" class="hidden"><div class="top"><div><div class="eyebrow">Audit</div><h2>Activiteit</h2></div></div><div id="auditList" class="card"></div></section>
+</main></div>
+<div id="newModal" class="modal hidden"><div class="modalbox"><h3>Nieuwe case</h3><div class="grid2"><div><div class="field"><label>Klant</label><input id="nCustomer" value="Van Dijk"></div><div class="field"><label>Plaats</label><input id="nCity" value="Nijmegen"></div><div class="field"><label>Type</label><select id="nType" onchange="plannerBrands()"><option>Laadpaal</option><option>Zonnepanelen</option><option>Thuisbatterij</option><option>Elektro</option></select></div><div class="field"><label>Merk/fabrikant</label><select id="nManufacturer"></select></div><div class="field"><label>Model (indien bekend)</label><input id="nModel" placeholder="bijv. Charge Lite / SE8K-RWS"></div><div class="field"><label>Serienummer (indien bekend)</label><input id="nSerial"></div></div><div><div class="field"><label>Melding</label><textarea id="nProblem">Mijn laadpaal laadt niet. Het lampje is rood en de auto laadt elders wel.</textarea></div></div></div><div style="text-align:right"><button class="btn" onclick="newModal.classList.add('hidden')">Annuleren</button> <button class="btn primary" onclick="createCase()">Aanmaken</button></div></div></div>
+<script src="/app.js"></script></body></html>

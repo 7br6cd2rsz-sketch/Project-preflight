@@ -1,0 +1,26 @@
+services:
+  - type: web
+    name: project-preflight-pilot
+    runtime: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: python cloud_server.py
+    healthCheckPath: /api/health
+    autoDeployTrigger: commit
+    envVars:
+      - key: SUPABASE_URL
+        value: https://bhajnludwvuyewxyxqhb.supabase.co
+      - key: SUPABASE_SECRET_KEY
+        sync: false
+      - key: BOOTSTRAP_ADMIN_EMAIL
+        sync: false
+      - key: BOOTSTRAP_ADMIN_PASSWORD
+        sync: false
+      - key: BOOTSTRAP_ADMIN_NAME
+        value: Administrator
+      - key: SUPABASE_STORAGE_BUCKET
+        value: preflight-attachments
+      - key: COOKIE_SECURE
+        value: "1"
+      - key: SESSION_HOURS
+        value: "12"
