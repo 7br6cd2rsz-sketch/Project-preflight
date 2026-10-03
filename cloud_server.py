@@ -29,7 +29,7 @@ from supabase import create_client, Client
 import server as core
 
 ROOT = Path(__file__).resolve().parent
-STATIC = ROOT / "static"
+STATIC = (ROOT / "static") if (ROOT / "static").is_dir() else ROOT
 
 APP_NAME = "Project Preflight"
 APP_VERSION = "1.0.0-cloud-pilot"
