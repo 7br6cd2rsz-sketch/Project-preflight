@@ -17,6 +17,7 @@ import os
 import re
 import secrets
 import sys
+import threading
 import time
 from collections import Counter, defaultdict
 from datetime import datetime, timezone, timedelta, date
@@ -25,6 +26,7 @@ from pathlib import Path
 from urllib.parse import urlparse, parse_qs
 
 from supabase import create_client, Client
+import httpx
 
 import server as core
 
@@ -32,7 +34,7 @@ ROOT = Path(__file__).resolve().parent
 STATIC = (ROOT / "static") if (ROOT / "static").is_dir() else ROOT
 
 APP_NAME = "Project Preflight"
-APP_VERSION = "1.0.0-cloud-pilot"
+APP_VERSION = "1.0.2-cloud-pilot"
 APP_BUILD = "2026-10-03"
 BUCKET = os.environ.get("SUPABASE_STORAGE_BUCKET", "preflight-attachments")
 MAX_BODY = 7 * 1024 * 1024
@@ -46,7 +48,30 @@ if not SUPABASE_URL or not SUPABASE_SECRET_KEY:
     print("ERROR: SUPABASE_URL and SUPABASE_SECRET_KEY are required.", file=sys.stderr)
     sys.exit(2)
 
-sb: Client = create_client(SUPABASE_URL, SUPABASE_SECRET_KEY)
+_sb_local = threading.local()
+
+def _get_supabase_client() -> Client:
+    client = getattr(_sb_local, "client", None)
+    if client is None:
+        client = create_client(SUPABASE_URL, SUPABASE_SECRET_KEY)
+        _sb_local.client = client
+    return client
+
+def _reset_supabase_client():
+    # Drop the thread-local client after a transient transport failure.
+    # A fresh client gets created lazily on the next Supabase call.
+    if hasattr(_sb_local, "client"):
+        try:
+            delattr(_sb_local, "client")
+        except Exception:
+            _sb_local.client = None
+
+
+class _SupabaseProxy:
+    def __getattr__(self, name):
+        return getattr(_get_supabase_client(), name)
+
+sb = _SupabaseProxy()
 
 def now_iso():
     return datetime.now(timezone.utc).isoformat()
@@ -626,7 +651,18 @@ class Handler(BaseHTTPRequestHandler):
                 self.send_header("Content-Length",str(len(raw)));self._security_headers();self.end_headers();self.wfile.write(raw);return
             return self._static(path)
         except Exception as e:
-            print("GET ERROR",repr(e),file=sys.stderr);return self._json({"error":"server_error"},500)
+            transient = isinstance(e, (httpx.ReadError, httpx.ReadTimeout, httpx.ConnectError, httpx.ConnectTimeout)) or (
+                "Resource temporarily unavailable" in repr(e)
+            )
+            retry_count = getattr(self, "_get_retry_count", 0)
+            if transient and retry_count < 2:
+                self._get_retry_count = retry_count + 1
+                _reset_supabase_client()
+                time.sleep(0.12 * (2 ** retry_count))
+                print(f"GET RETRY {self._get_retry_count} after transient network error: {e!r}", file=sys.stderr)
+                return self.do_GET()
+            print("GET ERROR",repr(e),file=sys.stderr)
+            return self._json({"error":"server_error"},500)
 
     def do_POST(self):
         if not self._check_origin():return self._json({"error":"invalid origin"},403)
