@@ -34,13 +34,38 @@ ROOT = Path(__file__).resolve().parent
 STATIC = (ROOT / "static") if (ROOT / "static").is_dir() else ROOT
 
 APP_NAME = "Project Preflight"
-APP_VERSION = "1.0.2-cloud-pilot"
+APP_VERSION = "1.0.4-cloud-pilot"
 APP_BUILD = "2026-10-03"
 BUCKET = os.environ.get("SUPABASE_STORAGE_BUCKET", "preflight-attachments")
 MAX_BODY = 7 * 1024 * 1024
 SESSION_HOURS = int(os.environ.get("SESSION_HOURS", "12"))
 COOKIE_SECURE = os.environ.get("COOKIE_SECURE", "1") not in ("0","false","False")
 PORT = int(os.environ.get("PORT", "10000"))
+
+# Lightweight, process-local abuse protection for the single-instance pilot.
+# Keys are salted hashes of client IP + scope; raw IPs are not retained.
+_RATE_LOCK = threading.Lock()
+_RATE_STATE = {}
+_RATE_SALT = secrets.token_bytes(16)
+
+def _rate_allow(client_ip: str, scope: str, limit: int, window_seconds: int):
+    now = int(time.time())
+    bucket = now // window_seconds
+    digest = hashlib.sha256(_RATE_SALT + f"{client_ip}|{scope}".encode()).hexdigest()
+    with _RATE_LOCK:
+        current = _RATE_STATE.get(digest)
+        if not current or current[0] != bucket:
+            _RATE_STATE[digest] = (bucket, 1)
+            if len(_RATE_STATE) > 5000:
+                stale = [k for k, (b, _) in _RATE_STATE.items() if b < bucket - 1]
+                for k in stale[:2500]:
+                    _RATE_STATE.pop(k, None)
+            return True, 0
+        if current[1] >= limit:
+            retry_after = max(1, window_seconds - (now % window_seconds))
+            return False, retry_after
+        _RATE_STATE[digest] = (bucket, current[1] + 1)
+        return True, 0
 
 SUPABASE_URL = os.environ.get("SUPABASE_URL", "").rstrip("/")
 SUPABASE_SECRET_KEY = os.environ.get("SUPABASE_SECRET_KEY", "")
@@ -467,7 +492,7 @@ def create_team_user(email,name,role,password):
     if not email or "@" not in email:raise ValueError("ongeldig e-mailadres")
     if not name:raise ValueError("naam ontbreekt")
     if role not in ("admin","planner","technician"):raise ValueError("ongeldige rol")
-    if not password or len(password)<10:raise ValueError("wachtwoord minimaal 10 tekens")
+    if not password or len(password)<12:raise ValueError("wachtwoord minimaal 12 tekens")
     existing=find_user_by_email(email)
     if existing:return existing,False
     row=first(sb.table("users").insert({
@@ -480,13 +505,18 @@ class Handler(BaseHTTPRequestHandler):
     server_version="ProjectPreflightCloud/1.0"
 
     def log_message(self, fmt, *args):
-        sys.stdout.write("[%s] %s\n"%(self.log_date_time_string(),fmt%args))
+        message = fmt % args
+        # Do not leak public intake tokens into hosting logs.
+        message = re.sub(r"([?&]token=)[^&\s\"]+", r"\1[REDACTED]", message)
+        sys.stdout.write("[%s] %s\n" % (self.log_date_time_string(), message))
 
     def _security_headers(self):
         self.send_header("X-Content-Type-Options","nosniff")
         self.send_header("X-Frame-Options","DENY")
-        self.send_header("Referrer-Policy","strict-origin-when-cross-origin")
+        self.send_header("Referrer-Policy","no-referrer")
         self.send_header("Permissions-Policy","camera=(self), microphone=(), geolocation=()")
+        self.send_header("Strict-Transport-Security","max-age=31536000")
+        self.send_header("X-Robots-Tag","noindex, nofollow, noarchive")
         self.send_header("Content-Security-Policy","default-src 'self'; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'; connect-src 'self'; frame-ancestors 'none'; base-uri 'self'")
 
     def _json(self,obj,status=200,extra_headers=None):
@@ -530,6 +560,16 @@ class Handler(BaseHTTPRequestHandler):
         try:return urlparse(origin).netloc==host
         except:return False
 
+    def _client_ip(self):
+        forwarded=(self.headers.get("X-Forwarded-For") or "").split(",")[0].strip()
+        return forwarded or (self.client_address[0] if self.client_address else "unknown")
+
+    def _rate_limit(self,scope,limit,window_seconds):
+        allowed,retry_after=_rate_allow(self._client_ip(),scope,limit,window_seconds)
+        if allowed:return True
+        self._json({"error":"te veel verzoeken; probeer later opnieuw"},429,{"Retry-After":str(retry_after)})
+        return False
+
     def _static(self,path):
         if path=="/":path="/index.html"
         safe=(STATIC/path.lstrip("/")).resolve()
@@ -537,7 +577,7 @@ class Handler(BaseHTTPRequestHandler):
         if not safe.exists() or not safe.is_file():self.send_error(404);return
         data=safe.read_bytes();ctype=mimetypes.guess_type(str(safe))[0] or "application/octet-stream"
         self.send_response(200);self.send_header("Content-Type",ctype);self.send_header("Content-Length",str(len(data)))
-        self.send_header("Cache-Control","public, max-age=300" if path not in ("/index.html","/app.js") else "no-cache")
+        self.send_header("Cache-Control","public, max-age=300" if path not in ("/index.html","/intake.html","/app.js") else "no-cache")
         self._security_headers();self.end_headers();self.wfile.write(data)
 
     def do_GET(self):
@@ -668,6 +708,9 @@ class Handler(BaseHTTPRequestHandler):
         if not self._check_origin():return self._json({"error":"invalid origin"},403)
         try:
             path=urlparse(self.path).path
+            # Public attack surface: bound repeated login attempts and intake spam.
+            if path=="/api/login" and not self._rate_limit("login",10,600):return
+            if path=="/api/public-intake" and not self._rate_limit("public-intake",30,3600):return
             body=self._body()
             if path=="/api/login":
                 email=str(body.get("email","")).lower().strip();pwd=str(body.get("password",""))
@@ -722,11 +765,15 @@ class Handler(BaseHTTPRequestHandler):
 
             if path=="/api/change-password":
                 current=str(body.get("current_password") or "");new=str(body.get("new_password") or "")
-                if len(new)<10:return self._json({"error":"nieuw wachtwoord minimaal 10 tekens"},400)
+                if len(new)<12:return self._json({"error":"nieuw wachtwoord minimaal 12 tekens"},400)
                 row=find_user_by_email(u["email"])
                 if not core.verify_password(current,row["password_hash"]):return self._json({"error":"huidig wachtwoord onjuist"},403)
                 sb.table("users").update({"password_hash":core.hash_password(new)}).eq("id",u["id"]).execute()
-                create_audit(None,u["id"],"password_changed","self-service");return self._json({"ok":True})
+                sb.table("sessions").delete().eq("user_id",u["id"]).execute()
+                create_audit(None,u["id"],"password_changed","self-service")
+                cookie="pf_session=; HttpOnly; SameSite=Lax; Path=/; Max-Age=0"
+                if COOKIE_SECURE:cookie+="; Secure"
+                return self._json({"ok":True,"relogin_required":True},200,{"Set-Cookie":cookie})
             if path=="/api/accounts":
                 if u["role"]!="admin":return self._json({"error":"forbidden"},403)
                 try:row,created=create_team_user(body.get("email"),body.get("display_name"),body.get("role"),body.get("password"))
@@ -735,8 +782,9 @@ class Handler(BaseHTTPRequestHandler):
             if path.startswith("/api/accounts/") and path.endswith("/reset-password"):
                 if u["role"]!="admin":return self._json({"error":"forbidden"},403)
                 uid=int(path.split("/")[3]);new=str(body.get("new_password") or "")
-                if len(new)<10:return self._json({"error":"nieuw wachtwoord minimaal 10 tekens"},400)
+                if len(new)<12:return self._json({"error":"nieuw wachtwoord minimaal 12 tekens"},400)
                 sb.table("users").update({"password_hash":core.hash_password(new)}).eq("id",uid).execute()
+                sb.table("sessions").delete().eq("user_id",uid).execute()
                 create_audit(None,u["id"],"admin_password_reset",str(uid));return self._json({"ok":True})
             if path=="/api/onboarding":
                 if u["role"] not in ("admin","planner"):return self._json({"error":"forbidden"},403)
@@ -816,6 +864,8 @@ class Handler(BaseHTTPRequestHandler):
                     try:sb.storage.from_(BUCKET).remove(paths)
                     except Exception as e:print("storage cleanup warning",repr(e),file=sys.stderr)
                 set_setting("onboarding_complete","0")
+                # Invalidate every previously shared public intake link.
+                set_setting("intake_token",secrets.token_urlsafe(24))
                 return self._json({"ok":True})
             if path=="/api/cases":
                 if u["role"] not in ("admin","planner"):return self._json({"error":"forbidden"},403)
