@@ -53,7 +53,7 @@ function updateWorkspaceChrome(){
  }
  if($("pageLabel")){
    let active=document.querySelector('nav button.active');
-   $("pageLabel").textContent=active?active.textContent.trim():"Overzicht";
+   $("pageLabel").textContent=active?(active.querySelector("span:last-child")?.textContent.trim()||active.textContent.trim()):"Overzicht";
  }
  if($("dashboardGreeting")){
    let h=new Date().getHours(),g=h<12?"Goedemorgen":h<18?"Goedemiddag":"Goedenavond";
@@ -72,19 +72,23 @@ async function api(path,opts={}){let h={"Content-Type":"application/json",...(op
 function show(v){
  if(systemTimer){clearInterval(systemTimer);systemTimer=null}
  document.querySelectorAll("main>section").forEach(x=>x.classList.add("hidden"));
- $(v+"View").classList.remove("hidden");
- document.querySelectorAll("nav button").forEach(b=>b.classList.toggle("active",b.dataset.view===v));
+ let target=$(v+"View");if(!target)return;target.classList.remove("hidden");
+ const parentView=({case:"cases",metrics:"pilotHub",pilot:"pilotHub",report:"pilotHub",product:"beheer",system:"beheer",audit:"beheer",onboarding:"beheer"})[v]||v;
+ document.querySelectorAll("nav button").forEach(b=>b.classList.toggle("active",b.dataset.view===parentView));
  if($("pageLabel")){
-   let active=document.querySelector(`nav button[data-view="${v}"]`);
-   $("pageLabel").textContent=active?active.textContent.trim():v;
+   const detailLabels={case:"Case",metrics:"KPI's & businesscase",pilot:"Pilot beheren",report:"Directierapport",product:"Productinstellingen",system:"Systeemstatus",audit:"Auditlog",onboarding:"Onboarding"};
+   let active=document.querySelector(`nav button[data-view="${parentView}"]`);
+   $("pageLabel").textContent=detailLabels[v]||(active?(active.querySelector("span:last-child")?.textContent.trim()||active.textContent.trim()):v);
  }
  window.scrollTo(0,0);
+ if(v==="pilotHub")loadPilotHub();
  if(v==="metrics")loadMetrics();
  if(v==="pilot")loadPilot();
  if(v==="report")loadReport();
  if(v==="product")loadProductManagement();
  if(v==="audit")loadAudit();
  if(v==="owner")loadOwnerConsole();
+ if(v==="beheer")configureManageHub();
  if(v==="system"){
    loadSystemStatus();
    systemTimer=setInterval(()=>{if(!$("systemView").classList.contains("hidden"))loadSystemStatus(true)},60000);
@@ -98,7 +102,22 @@ document.addEventListener("keydown",e=>{
 });
 function pill(s){let c=s==="Ingepland"||s==="Afgerond"?"good":s==="Info ontbreekt"?"warn":s==="Review"?"review":"";return `<span class="pill ${c}">${escapeReport(s)}</span>`}
 async function loginNow(){try{let d=await api("/api/login",{method:"POST",body:JSON.stringify({email:email.value,password:password.value})});me=d.user;await boot()}catch(e){loginMsg.textContent=e.message}}
-async function boot(){try{me=await api("/api/me");login.classList.add("hidden");app.classList.remove("hidden");who.textContent=`${me.display_name} · ${me.is_platform_owner?"eigenaar · ":""}${me.role} · ${me.organization_name||""}`;metricsNav.style.display=me.role==="technician"?"none":"";reportNav.style.display=me.role==="technician"?"none":"";pilotNav.style.display=me.role==="technician"?"none":"";onboardingNav.style.display=me.role==="technician"?"none":"";productNav.style.display=me.role==="technician"?"none":"";systemNav.style.display=me.role==="admin"?"":"none";ownerNav.style.display=me.is_platform_owner?"":"none";settingsNav.style.display=me.role==="technician"?"none":"";teamNav.style.display=me.role==="technician"?"none":"";auditNav.style.display=me.role==="technician"?"none":"";newBtn.style.display=me.role==="technician"?"none":"";newBtn2.style.display=me.role==="technician"?"none":"";updateWorkspaceChrome();await Promise.all([loadCases(),me.role==="technician"?Promise.resolve():loadUsers(),me.role==="technician"?Promise.resolve():loadSettings()]);if(settings)applyBranding(settings);render();if(me.role==="technician")show("workorders");else{let ob=await api("/api/onboarding-status");if(!ob.complete){initOnboarding(ob);show("onboarding")}}}catch(e){token=null}}
+async function boot(){try{
+ me=await api("/api/me");login.classList.add("hidden");app.classList.remove("hidden");
+ who.textContent=`${me.display_name} · ${me.is_platform_owner?"eigenaar · ":""}${me.role} · ${me.organization_name||""}`;
+ const tech=me.role==="technician",admin=me.role==="admin",owner=!!me.is_platform_owner;
+ const vis=(id,on)=>{let el=$(id);if(el)el.classList.toggle("hidden",!on)};
+ vis("dashboardNav",!tech);vis("casesNav",!tech);vis("workordersNav",tech);vis("pilotHubNav",!tech);vis("settingsNav",!tech);vis("teamNav",!tech);vis("ownerNav",owner);vis("beheerNav",!tech&&(admin||owner));
+ let platform=$("platformNavGroup");if(platform)platform.classList.toggle("hidden",tech||!(admin||owner));
+ vis("newBtn",!tech);vis("newBtn2",!tech);
+ updateWorkspaceChrome();
+ await Promise.all([loadCases(),tech?Promise.resolve():loadUsers(),tech?Promise.resolve():loadSettings()]);
+ if(settings)applyBranding(settings);render();configureManageHub();
+ if(tech){show("workorders");return}
+ let ob=await api("/api/onboarding-status");
+ if(!ob.complete&&(admin||owner)){initOnboarding(ob);show("onboarding");return}
+ show("dashboard");
+ }catch(e){console.error(e);token=null}}
 async function loadCases(){cases=await api("/api/cases")}
 async function loadUsers(){users=await api("/api/users")}
 async function loadSettings(){settings=await api("/api/settings")}
@@ -208,7 +227,7 @@ async function createOrganization(){
 
 function table(rows=cases){
  if(!rows.length)return `<div class="ws-empty"><b>Geen cases gevonden</b>Pas je zoekopdracht of filters aan.</div>`;
- return `<div class="row head"><div>Klant / case</div><div>Type / asset</div><div>Status</div><div>Readiness</div><div></div></div>`+rows.map(c=>{let score=Math.max(0,Math.min(100,Number(c.score)||0));return `<div class="row case" onclick="openCase(${Number(c.id)})"><div><b>${escapeReport(c.customer||"Nieuwe klant")}</b><br><span class="sub">${escapeReport(c.case_no)}${c.city?` · ${escapeReport(c.city)}`:""}</span></div><div class="ws-type"><b>${escapeReport(c.type||"—")}</b><br><span class="sub">${escapeReport(c.asset||[c.manufacturer,c.model].filter(Boolean).join(" ")||"Nog te identificeren")}</span></div><div>${pill(c.status)}</div><div class="ws-score"><b>${score}%</b><span class="ws-scorebar"><i style="width:${score}%"></i></span></div><div class="ws-action">Open →</div></div>`}).join("")
+ return `<div class="row head"><div>Klant / case</div><div>Type / asset</div><div>Status</div><div>Gereedheid</div><div></div></div>`+rows.map(c=>{let score=Math.max(0,Math.min(100,Number(c.score)||0));return `<div class="row case" onclick="openCase(${Number(c.id)})"><div><b>${escapeReport(c.customer||"Nieuwe klant")}</b><br><span class="sub">${escapeReport(c.case_no)}${c.city?` · ${escapeReport(c.city)}`:""}</span></div><div class="ws-type"><b>${escapeReport(c.type||"—")}</b><br><span class="sub">${escapeReport(c.asset||[c.manufacturer,c.model].filter(Boolean).join(" ")||"Nog te identificeren")}</span></div><div>${pill(c.status)}</div><div class="ws-score"><b>${score}%</b><span class="ws-scorebar"><i style="width:${score}%"></i></span></div><div class="ws-action">Open →</div></div>`}).join("")
 }
 function renderCasesView(){
  if(!$("casesTable"))return;
@@ -227,7 +246,7 @@ function render(){
  if(me.role!=="technician"){renderTeam();if(settings){intakeLink.textContent=`${location.origin}/intake.html?token=${encodeURIComponent(settings.intake_token)}`}}
 }
 function renderTeam(){teamList.innerHTML=`<div class="row head"><div>Naam</div><div>E-mail</div><div>Rol</div><div></div><div></div></div>`+users.map(u=>`<div class="row"><div>${escapeReport(u.display_name)}</div><div>${escapeReport(u.email)}</div><div>${escapeReport(u.role)}</div><div></div><div></div></div>`).join("")}
-function renderWorkorders(){workorders.innerHTML=cases.length?cases.map(c=>`<div class="card section" onclick="openCase(${Number(c.id)})" style="cursor:pointer"><div class="eyebrow">${escapeReport(c.case_no)}</div><h3>${escapeReport(c.customer)} · ${escapeReport(c.type)}</h3><div class="kv"><span>Merk/model</span><span>${escapeReport([c.manufacturer,c.model].filter(Boolean).join(' ')||c.asset||'Onbekend')}</span></div><div class="kv"><span>Locatie</span><span>${escapeReport(c.city||"")}</span></div><div class="kv"><span>Klacht</span><span>${escapeReport(c.problem||"")}</span></div><div class="kv"><span>Dispatch</span><span>${escapeReport(c.dispatch||"")}</span></div>${(c.prep||[]).map(x=>`<div class="check">✓ ${escapeReport(x)}</div>`).join("")}</div>`).join(""):`<div class="sub">Geen toegewezen werkorders.</div>`}
+function renderWorkorders(){workorders.innerHTML=cases.length?cases.map(c=>`<div class="card section" onclick="openCase(${Number(c.id)})" style="cursor:pointer"><div class="eyebrow">${escapeReport(c.case_no)}</div><h3>${escapeReport(c.customer)} · ${escapeReport(c.type)}</h3><div class="kv"><span>Merk/model</span><span>${escapeReport([c.manufacturer,c.model].filter(Boolean).join(' ')||c.asset||'Onbekend')}</span></div><div class="kv"><span>Locatie</span><span>${escapeReport(c.city||"")}</span></div><div class="kv"><span>Klacht</span><span>${escapeReport(c.problem||"")}</span></div><div class="kv"><span>Werkadvies</span><span>${escapeReport(c.dispatch||"")}</span></div>${(c.prep||[]).map(x=>`<div class="check">✓ ${escapeReport(x)}</div>`).join("")}</div>`).join(""):`<div class="sub">Geen toegewezen werkorders.</div>`}
 function openNew(){newModal.classList.remove("hidden")}
 function plannerBrands(){let opts=nType.value==="Laadpaal"?["Easee","Alfen","Wallbox","Zaptec","Anders/onbekend"]:nType.value==="Zonnepanelen"?["SolarEdge","GoodWe","Growatt","SMA","Enphase","Anders/onbekend"]:nType.value==="Thuisbatterij"?["SolarEdge","GoodWe","BYD","Huawei","Tesla","Anders/onbekend"]:["Anders/onbekend"];nManufacturer.innerHTML=opts.map(x=>`<option>${x}</option>`).join("")}
 plannerBrands();
@@ -236,10 +255,10 @@ async function openCase(id){
  current=cases.find(c=>c.id===id);if(!current)return;
  const sourceLink=current.knowledge_url?`<a href="${safeHref(current.knowledge_url)}" target="_blank" rel="noopener noreferrer" style="color:#1684b8">${escapeReport(current.knowledge_title||"OEM documentatie")}</a>`:escapeReport(current.knowledge_title||"Generiek");
  const routeLink=current.route_source_url?`<a href="${safeHref(current.route_source_url)}" target="_blank" rel="noopener noreferrer" style="color:#1684b8">${escapeReport(current.route_source_title||"OEM documentatie")}</a>`:escapeReport(current.route_source_title||"—");
- if($("caseHero")){let score=Math.max(0,Math.min(100,Number(current.score)||0));$("caseHero").innerHTML=`<div><div class="ws-caseid">${escapeReport(current.case_no)}</div><h2>${escapeReport(current.customer||"Nieuwe klant")}</h2><div class="ws-casefacts"><span>${escapeReport(current.type||"—")}</span><span>${escapeReport(current.city||"Geen plaats")}</span><span>${pill(current.status)}</span><span>${escapeReport(current.manufacturer||"Merk onbekend")}${current.model?` · ${escapeReport(current.model)}`:""}</span></div></div><div class="ws-scoreorb" style="--score:${score}%"><b>${score}%</b><small>READY</small></div>`}
+ if($("caseHero")){let score=Math.max(0,Math.min(100,Number(current.score)||0));$("caseHero").innerHTML=`<div><div class="ws-caseid">${escapeReport(current.case_no)}</div><h2>${escapeReport(current.customer||"Nieuwe klant")}</h2><div class="ws-casefacts"><span>${escapeReport(current.type||"—")}</span><span>${escapeReport(current.city||"Geen plaats")}</span><span>${pill(current.status)}</span><span>${escapeReport(current.manufacturer||"Merk onbekend")}${current.model?` · ${escapeReport(current.model)}`:""}</span></div></div><div class="ws-scoreorb" style="--score:${score}%"><b>${score}%</b><small>GEREED</small></div>`}
  caseMain.innerHTML=`<div class="eyebrow">${escapeReport(current.case_no)}</div><h3>${escapeReport(current.customer)} · ${escapeReport(current.type)}</h3><div class="kv"><span>Plaats</span><span>${escapeReport(current.city||"")}</span></div><div class="kv"><span>Asset</span><span>${escapeReport(current.asset||"")}</span></div><div class="kv"><span>Merk</span><span>${escapeReport(current.manufacturer||"Onbekend")}</span></div><div class="kv"><span>Model</span><span>${escapeReport(current.model||"Onbekend")}</span></div><div class="kv"><span>Serienummer</span><span>${escapeReport(current.serial_no||"Onbekend")}</span></div><div class="kv"><span>Melding</span><span>${escapeReport(current.problem||"")}</span></div><div class="field"><label>Status</label><select id="caseStatus"><option ${current.status==="Info ontbreekt"?"selected":""}>Info ontbreekt</option><option ${current.status==="Review"?"selected":""}>Review</option><option ${current.status==="Ingepland"?"selected":""}>Ingepland</option><option ${current.status==="Afgerond"?"selected":""}>Afgerond</option></select></div>`;
  prep.innerHTML=`<div class="eyebrow" style="margin-bottom:7px">Kritisch vóór vertrek</div>${(current.ftf_critical||[]).map(x=>`<div class="check">★ ${escapeReport(x)}</div>`).join("")}<div class="eyebrow" style="margin:12px 0 7px">Veelvoorkomende vermijdbare gaten</div>${(current.ftf_gaps||[]).map(x=>`<div class="check warn">! ${escapeReport(x)}</div>`).join("")}<div class="eyebrow" style="margin:12px 0 7px">Onderdelen-/middelenstrategie</div>${(current.ftf_parts||[]).map(x=>`<div class="check">◇ ${escapeReport(x)}</div>`).join("")}<div class="eyebrow" style="margin:12px 0 7px">Monteurbriefing</div>${(current.prep||[]).map(x=>`<div class="check">• ${escapeReport(x)}</div>`).join("")}`;
- caseSide.innerHTML=`<h3>Readiness</h3><div style="font-size:42px;font-weight:900">${Number(current.score)||0}%</div><div class="kv"><span>Dispatch</span><span>${escapeReport(current.dispatch||"")}</span></div><div class="kv"><span>Version</span><b>${Number(current.version)||1}</b></div><div class="kv"><span>Bron</span><span>${escapeReport(current.source)}</span></div><div class="kv"><span>Technische bron</span><span>${sourceLink}</span></div><div class="kv"><span>API-ready</span><span>${escapeReport((current.api_targets||[]).join(", ")||"—")}</span></div><div class="kv"><span>Storingsroute</span><b>${escapeReport(current.fault_category||"Nog niet geclassificeerd")}</b></div><div class="kv"><span>Confidence</span><span>${escapeReport(current.fault_confidence||"laag")}</span></div><div class="kv"><span>Triageniveau</span><span>${escapeReport(current.triage_level||"standaard")}</span></div><div class="kv"><span>Bewijs</span><span>${escapeReport((current.fault_evidence||[]).join(" · ")||"—")}</span></div><div class="kv"><span>Service-route</span><b>${escapeReport(current.service_route||"remote-triage")}</b></div><div class="kv"><span>Competentie</span><span>${escapeReport(current.required_competence||"Technische review")}</span></div><div class="kv"><span>Locatie-trigger</span><span>${escapeReport(current.site_trigger||"—")}</span></div><div class="kv"><span>Escalatie</span><span>${escapeReport(current.escalation_path||"—")}</span></div><div class="kv"><span>Routebron</span><span>${routeLink}</span></div>`;
+ caseSide.innerHTML=`<div class="eyebrow">Voorbereiding</div><h3>Gereedheid</h3><div style="font-size:42px;font-weight:900">${Number(current.score)||0}%</div><div class="kv"><span>Werkadvies</span><span>${escapeReport(current.dispatch||"Nog geen werkadvies")}</span></div><div class="kv"><span>Storingsroute</span><b>${escapeReport(current.fault_category||"Nog niet geclassificeerd")}</b></div><div class="kv"><span>Service-route</span><b>${escapeReport(current.service_route||"Nog te bepalen")}</b></div><div class="kv"><span>Benodigde expertise</span><span>${escapeReport(current.required_competence||"Technische review")}</span></div><div class="kv"><span>Wanneer locatie nodig is</span><span>${escapeReport(current.site_trigger||"—")}</span></div><div class="kv"><span>Escalatie</span><span>${escapeReport(current.escalation_path||"—")}</span></div><details class="cc-techdetails section"><summary>Technische details</summary><div class="kv"><span>Dossierversie</span><b>${Number(current.version)||1}</b></div><div class="kv"><span>Bron melding</span><span>${escapeReport(current.source)}</span></div><div class="kv"><span>Technische bron</span><span>${sourceLink}</span></div><div class="kv"><span>Integratiedoelen</span><span>${escapeReport((current.api_targets||[]).join(", ")||"—")}</span></div><div class="kv"><span>Zekerheid classificatie</span><span>${escapeReport(current.fault_confidence||"laag")}</span></div><div class="kv"><span>Triageniveau</span><span>${escapeReport(current.triage_level||"standaard")}</span></div><div class="kv"><span>Onderbouwing</span><span>${escapeReport((current.fault_evidence||[]).join(" · ")||"—")}</span></div><div class="kv"><span>Routebron</span><span>${routeLink}</span></div></details>`;
  assignedTo.innerHTML=`<option value="">Niet toegewezen</option>`+users.filter(u=>u.role==="technician").map(u=>`<option value="${Number(u.id)}" ${current.assigned_to===u.id?"selected":""}>${escapeReport(u.display_name)}</option>`).join("");
  assignBtn.style.display=me.role==="technician"?"none":"";assignedTo.disabled=me.role==="technician";await Promise.all([loadNotes(),loadAttachments()]);renderOutcome();show("case")
 }
@@ -306,6 +325,31 @@ function renderEconomics(e){
  eBreakEven.textContent=e.projection.break_even===null?"Nog onvoldoende outcome-data":(e.projection.break_even?"Ja":"Nee");
  fillEconomicInputs(e.assumptions);
 }
+async function loadPilotHub(){
+ try{
+  let [m,p]=await Promise.all([api("/api/metrics"),api("/api/pilot")]);
+  if($("phFTF"))phFTF.textContent=(m.first_time_fix_pct??0)+"%";
+  if($("phSecond"))phSecond.textContent=(m.second_visit_pct??0)+"%";
+  if($("phRemote"))phRemote.textContent=(m.remote_resolved_pct??0)+"%";
+  if($("phNet"))phNet.textContent=euro(m.economics?.projection?.projected_net_value_eur||0);
+  let active=p?.active?p.pilot:null;
+  if($("phPilotName"))phPilotName.textContent=active?.name||"Nog geen actieve pilot";
+  if($("phPilotStatus")){
+    if(active){let bits=[active.start_date&&`start ${active.start_date}`,active.end_date&&`einde ${active.end_date}`,p?.days?.elapsed_pct!=null&&`${p.days.elapsed_pct}% voortgang`].filter(Boolean);phPilotStatus.textContent=bits.join(" · ")||"Pilot actief"}
+    else phPilotStatus.textContent="Start een pilot om nulmeting, doelen en voortgang vast te leggen.";
+  }
+ }catch(e){console.error(e);if($("phPilotName"))phPilotName.textContent="Pilotgegevens niet beschikbaar"}
+}
+function configureManageHub(){
+ if(!me)return;
+ const admin=me.role==="admin",owner=!!me.is_platform_owner;
+ const vis=(id,on)=>{let el=$(id);if(el)el.classList.toggle("hidden",!on)};
+ vis("manageOrganizations",owner);vis("manageTeam",me.role!=="technician");vis("manageProduct",admin||owner);vis("manageSystem",admin||owner);vis("manageAudit",admin||owner);vis("manageOnboarding",admin||owner);
+}
+async function openOnboardingFromManage(){
+ try{let ob=await api("/api/onboarding-status");initOnboarding(ob);show("onboarding")}catch(e){alert(e.message)}
+}
+function setAttentionFilter(){if($("caseStatusFilter"))caseStatusFilter.value="attention";renderCasesView()}
 async function loadMetrics(){let m=await api("/api/metrics");lastMetrics=m;kTotal.textContent=m.total;kPublic.textContent=m.customer_intakes;kIntake.textContent=Math.round(m.avg_intake_seconds)+"s";kComplete.textContent=m.complete_pct+"%";kScheduled.textContent=m.scheduled_pct+"%";kFTF.textContent=m.first_time_fix_pct+"%";kSecond.textContent=m.second_visit_pct+"%";kPreventable.textContent=m.preventable_second_visit_pct+"%";kRemote.textContent=m.remote_resolved_pct+"%";kOutcomes.textContent=m.outcomes;renderEconomics(m.economics)}
 async function saveEconomicAssumptions(){await api("/api/settings",{method:"PATCH",body:JSON.stringify({
  baseline_planner_minutes:aBaselinePlanner.value,
@@ -390,7 +434,7 @@ const OB_BRAND_DEFAULTS={
 };
 function initOnboarding(state){
  obState=state||{};
- obCompany.value=state?.company_name||"";obSupportEmail.value=o.branding?.support_email||"";obPrivacyUrl.value=o.branding?.privacy_url||"";
+ obCompany.value=state?.company_name||"";obSupportEmail.value=state?.branding?.support_email||"";obPrivacyUrl.value=state?.branding?.privacy_url||"";
  document.querySelectorAll(".obService").forEach(x=>x.checked=(state?.enabled_service_types||["Laadpaal","Zonnepanelen"]).includes(x.value));
  let a=state?.assumptions||{};
  obBaselinePlanner.value=a.baseline_planner_minutes??13;

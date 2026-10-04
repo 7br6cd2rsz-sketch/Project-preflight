@@ -8,7 +8,7 @@
 <link href="/manifest.webmanifest" rel="manifest"/>
 <link href="/apple-touch-icon.png" rel="apple-touch-icon" sizes="180x180"/>
 <link href="/icon-192.png" rel="icon" sizes="192x192" type="image/png"/>
-<link href="/icon-512.png" rel="icon" sizes="512x512" type="image/png"/><meta content="#07131f" name="theme-color"/><title>Werkstuur · Control Center</title>
+<link href="/icon-512.png" rel="icon" sizes="512x512" type="image/png"/><meta content="#07131f" name="theme-color"/><title>Werkstuur · Serviceomgeving</title>
 <style>
 :root{--bg:#06101c;--panel:#0e1a2b;--line:#243b58;--text:#edf6ff;--muted:#8da4ba;--accent:#62d0ff;--good:#78e4aa;--warn:#ffd166;--danger:#ff8195}
 *{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at 10% 0,#0d2946,#06101c 45%);color:var(--text);font-family:Inter,system-ui,sans-serif}button,input,textarea,select{font:inherit}.hidden{display:none!important}
@@ -126,16 +126,40 @@ main{padding:0 34px 70px;max-width:1640px}.cc-workspacebar{height:62px;margin-bo
 @media(max-width:1100px){.cc-dashboardgrid{grid-template-columns:1fr}.cc-casebar{grid-template-columns:1fr 1fr 1fr}.cc-search{grid-column:1/-1}.cc-clearfilters{width:100%}}
 @media(max-width:900px){.cc-loginbox{grid-template-columns:1fr;max-width:560px}.cc-login-intro{display:none}.cc-login-form{padding:34px 26px}.app>aside{padding:7px 9px}.cc-nav button{min-height:35px}main{padding:0 13px 55px}.cc-workspacebar{margin-bottom:19px}.cc-pagehead h2{font-size:28px}.cc-dashboardgrid{gap:10px}}
 @media(max-width:650px){.login{padding:12px}.cc-loginbox{width:100%;border-radius:18px!important}.cc-login-form{padding:28px 20px}.cc-casebar{grid-template-columns:1fr 1fr}.cc-search{grid-column:1/-1}.cc-casebar select{font-size:9px}.cc-clearfilters{grid-column:1/-1}.cc-workspacebar{position:relative;top:0}.cc-page{display:none}.cc-workspace{width:100%;justify-content:space-between}.cc-metric{min-height:76px}.cc-metric b{font-size:22px}.cc-sidepanel{grid-template-columns:1fr}.cc-inline-actions .btn{flex:1}}
-</style></head><body>
+</style>
+<style>
+/* ===== Werkstuur 1.3.1 UX cleanup ===== */
+.cc-nav button.hidden,.cc-navgroup.hidden,.cc-managecard.hidden{display:none!important}
+.cc-sidepanel{position:static!important;top:auto!important;height:auto!important;background:transparent!important;border:0!important;padding:0!important;overflow:visible!important}
+.cc-techdetails{border-top:1px solid rgba(116,155,184,.12);padding-top:10px}.cc-techdetails summary{cursor:pointer;color:#7e99ad;font-size:9px;font-weight:800;letter-spacing:.04em}.cc-techdetails[open] summary{margin-bottom:9px}.cc-nextpanel p{font-size:10px;line-height:1.6;color:#71889a;margin:7px 0 14px}.cc-hubgrid,.cc-managegrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:11px}.cc-hubcard,.cc-managecard{display:grid;grid-template-columns:40px minmax(0,1fr) 18px;gap:12px;align-items:center;text-align:left;border:1px solid rgba(116,155,184,.14);border-radius:15px;background:linear-gradient(155deg,rgba(14,29,43,.96),rgba(9,22,34,.98));color:#eaf3f8;padding:16px;cursor:pointer;min-height:102px;transition:.15s ease}.cc-hubcard:hover,.cc-managecard:hover{border-color:rgba(98,208,255,.35);transform:translateY(-1px);background:linear-gradient(155deg,rgba(17,36,53,.98),rgba(10,25,38,.98))}.cc-hubicon,.cc-managecard>span{width:40px;height:40px;border-radius:12px;display:grid;place-items:center;background:rgba(98,208,255,.07);border:1px solid rgba(98,208,255,.14);color:#79cde9;font-weight:900}.cc-hubcard b,.cc-managecard b{display:block;font-size:12px}.cc-hubcard small,.cc-managecard small{display:block;margin-top:5px;color:#71899b;font-size:9px;line-height:1.45}.cc-hubcard>i,.cc-managecard>i{font-style:normal;color:#617f94}.cc-pilot-context{display:flex;justify-content:space-between;align-items:center;gap:18px}.cc-pilot-context h3{margin:4px 0}.cc-pilot-context p{margin:0}.cc-casetable{min-height:0}.cc-casetable:has(.ws-empty){background:transparent;border-style:dashed}.cc-navgroup#platformNavGroup{margin-top:auto;padding-top:12px;border-top:1px solid var(--cc-line-soft)}
+@media(min-width:901px){.cc-nav{min-height:calc(100vh - 170px);display:flex!important;flex-direction:column}.cc-nav-main{margin-bottom:0}.cc-navgroup#platformNavGroup{margin-top:auto;margin-bottom:72px}}
+@media(max-width:1050px){.cc-hubgrid,.cc-managegrid{grid-template-columns:1fr 1fr}}
+@media(max-width:900px){body{padding-bottom:76px}.app>aside{position:fixed!important;left:0;right:0;bottom:0;top:auto;height:68px!important;z-index:80;border:0!important;border-top:1px solid #173047!important;background:rgba(5,13,22,.97)!important;backdrop-filter:blur(18px);padding:5px 7px!important;overflow:visible!important}.cc-brand,.cc-profile,.cc-navlabel{display:none!important}.cc-nav{height:58px;display:flex!important;overflow-x:auto;align-items:stretch;gap:3px;padding:0!important}.cc-navgroup{display:contents!important}.cc-nav button{flex:1 0 60px!important;min-width:60px!important;height:58px!important;padding:6px 5px!important;margin:0!important;display:flex!important;flex-direction:column!important;justify-content:center;gap:3px!important;text-align:center!important;border-radius:10px!important;font-size:8px!important}.cc-navicon{display:block!important;width:auto!important;height:auto!important;flex:0 0 auto!important;border:0!important;background:transparent!important;font-size:16px!important}.cc-nav button.active{box-shadow:inset 0 2px 0 var(--cc-accent)!important;background:rgba(98,208,255,.07)!important}.cc-nav button.cc-mobile-secondary{display:none!important}.cc-nav button[data-view="pilotHub"]>span:last-child{font-size:0}.cc-nav button[data-view="pilotHub"]>span:last-child:after{content:"Pilot";font-size:8px}.cc-workspacebar{margin-top:0}.cc-hubgrid,.cc-managegrid{grid-template-columns:1fr 1fr}.cc-dashboardgrid{grid-template-columns:1fr}.cc-sidepanel{grid-template-columns:1fr!important}}
+@media(max-width:600px){.cc-hubgrid,.cc-managegrid{grid-template-columns:1fr}.cc-hubcard,.cc-managecard{min-height:88px;padding:13px}.cc-pilot-context{align-items:flex-start;flex-direction:column}.cc-metrics{grid-template-columns:1fr 1fr!important}.cc-pagehead{align-items:flex-start}.cc-pagehead .btn{width:100%;margin-top:8px}}
+</style>
+</head><body>
 <div class="ws-toaststack" id="toastStack" aria-live="polite"></div>
 <div class="login" id="login"><div class="loginbox cc-loginbox">
-<div class="cc-login-intro"><div class="cc-login-brand"><span>W</span><b>WERKSTUUR</b></div><div><div class="eyebrow">Service operations</div><h1>Van melding naar een werkbare opdracht.</h1><p>Werkstuur bundelt intake, technische voorbereiding en opvolging in één rustige werkomgeving.</p></div><div class="cc-login-points"><span>✓ Completere intake</span><span>✓ Minder zoekwerk voor planning</span><span>✓ Duidelijke monteursbriefing</span></div></div>
-<div class="cc-login-form"><div class="eyebrow">Control Center</div><h2>Inloggen</h2><div class="sub">Gebruik je Werkstuur-account om verder te gaan.</div><div class="field"><label>E-mail</label><input autocomplete="username" id="email" type="email" placeholder="naam@bedrijf.nl"/></div><div class="field"><label>Wachtwoord</label><input autocomplete="current-password" id="password" type="password" placeholder="••••••••••••"/></div><button class="btn primary full" onclick="loginNow()">Inloggen <span aria-hidden="true">→</span></button><div class="msg" id="loginMsg"></div><div class="cc-login-foot">Beveiligde Werkstuur-omgeving</div></div>
+<div class="cc-login-intro"><div class="cc-login-brand"><span>W</span><b>WERKSTUUR</b></div><div><div class="eyebrow">Serviceproces</div><h1>Van melding naar een werkbare opdracht.</h1><p>Werkstuur bundelt intake, technische voorbereiding en opvolging in één rustige werkomgeving.</p></div><div class="cc-login-points"><span>✓ Completere intake</span><span>✓ Minder zoekwerk voor planning</span><span>✓ Duidelijke monteursbriefing</span></div></div>
+<div class="cc-login-form"><div class="eyebrow">Werkstuur</div><h2>Inloggen</h2><div class="sub">Gebruik je Werkstuur-account om verder te gaan.</div><div class="field"><label>E-mail</label><input autocomplete="username" id="email" type="email" placeholder="naam@bedrijf.nl"/></div><div class="field"><label>Wachtwoord</label><input autocomplete="current-password" id="password" type="password" placeholder="••••••••••••"/></div><button class="btn primary full" onclick="loginNow()">Inloggen <span aria-hidden="true">→</span></button><div class="msg" id="loginMsg"></div><div class="cc-login-foot">Beveiligde Werkstuur-omgeving</div></div>
 </div></div>
 <div class="app hidden" id="app"><aside><div class="cc-brand">
 <div class="cc-brandmark">W</div>
-<div class="cc-brandcopy"><strong>WERKSTUUR</strong><span>Control Center</span></div>
-</div><nav class="cc-nav"><div class="cc-navgroup"><div class="cc-navlabel">WERK</div><button class="active" data-view="dashboard"><span aria-hidden="true" class="cc-navicon">⌂</span><span>Overzicht</span></button><button data-view="cases"><span aria-hidden="true" class="cc-navicon">▦</span><span>Cases</span></button><button data-view="workorders"><span aria-hidden="true" class="cc-navicon">↗</span><span>Werkorders</span></button></div><div class="cc-navgroup"><div class="cc-navlabel">PILOT</div><button data-view="metrics" id="metricsNav"><span aria-hidden="true" class="cc-navicon">◒</span><span>KPI's</span></button><button data-view="pilot" id="pilotNav"><span aria-hidden="true" class="cc-navicon">◎</span><span>Pilotbeheer</span></button><button data-view="report" id="reportNav"><span aria-hidden="true" class="cc-navicon">▤</span><span>Directierapport</span></button></div><div class="cc-navgroup"><div class="cc-navlabel">KLANT</div><button data-view="settings" id="settingsNav"><span aria-hidden="true" class="cc-navicon">◇</span><span>Klantintake</span></button><button data-view="team" id="teamNav"><span aria-hidden="true" class="cc-navicon">○</span><span>Team</span></button></div><div class="cc-navgroup"><div class="cc-navlabel">PLATFORM</div><button data-view="owner" id="ownerNav"><span aria-hidden="true" class="cc-navicon">◆</span><span>Werkstuur Beheer</span></button><button data-view="system" id="systemNav"><span aria-hidden="true" class="cc-navicon">●</span><span>Systeemstatus</span></button></div><details class="cc-advanced"><summary>Meer beheer</summary><button data-view="product" id="productNav"><span aria-hidden="true" class="cc-navicon">⚙</span><span>Productbeheer</span></button><button data-view="audit" id="auditNav"><span aria-hidden="true" class="cc-navicon">≡</span><span>Auditlog</span></button><button data-view="onboarding" id="onboardingNav"><span aria-hidden="true" class="cc-navicon">＋</span><span>Onboarding</span></button></details></nav>
+<div class="cc-brandcopy"><strong>WERKSTUUR</strong><span>Serviceomgeving</span></div>
+</div><nav class="cc-nav" aria-label="Hoofdnavigatie">
+<div class="cc-navgroup cc-nav-main"><div class="cc-navlabel">WERK</div>
+<button class="active" data-view="dashboard" id="dashboardNav"><span aria-hidden="true" class="cc-navicon">⌂</span><span>Overzicht</span></button>
+<button data-view="cases" id="casesNav"><span aria-hidden="true" class="cc-navicon">▦</span><span>Cases</span></button>
+<button data-view="workorders" id="workordersNav"><span aria-hidden="true" class="cc-navicon">↗</span><span>Mijn werk</span></button>
+<button data-view="pilotHub" id="pilotHubNav"><span aria-hidden="true" class="cc-navicon">◒</span><span>Pilot &amp; resultaten</span></button>
+<button data-view="settings" id="settingsNav"><span aria-hidden="true" class="cc-navicon">◇</span><span>Klantintake</span></button>
+<button data-view="team" id="teamNav"><span aria-hidden="true" class="cc-navicon">○</span><span>Team</span></button>
+</div>
+<div class="cc-navgroup" id="platformNavGroup"><div class="cc-navlabel">BEHEER</div>
+<button data-view="owner" id="ownerNav" class="cc-mobile-secondary"><span aria-hidden="true" class="cc-navicon">◆</span><span>Organisaties</span></button>
+<button data-view="beheer" id="beheerNav"><span aria-hidden="true" class="cc-navicon">⚙</span><span>Beheer</span></button>
+</div>
+</nav>
 <div class="cc-profile">
 <div class="cc-avatar" id="userInitials">MO</div>
 <div class="cc-profilecopy">
@@ -241,7 +265,7 @@ main{padding:0 34px 70px;max-width:1640px}.cc-workspacebar{height:62px;margin-bo
 <section id="dashboardView">
 <div class="cc-pagehead">
 <div>
-<div class="eyebrow">Werkstuur Control Center</div>
+<div class="eyebrow">Werkstuur</div>
 <h2 id="dashboardGreeting">Goedemiddag</h2>
 <div class="sub">Dit is wat nu aandacht nodig heeft in de actieve omgeving.</div>
 </div>
@@ -254,7 +278,7 @@ main{padding:0 34px 70px;max-width:1640px}.cc-workspacebar{height:62px;margin-bo
 </div>
 <div class="cc-metric attention">
 <div class="cc-metricicon">!</div>
-<div><small>Wacht op review</small><b id="mReview">0</b><span>vraagt aandacht</span></div>
+<div><small>Aandacht nodig</small><b id="mReview">0</b><span>review of info ontbreekt</span></div>
 </div>
 <div class="cc-metric">
 <div class="cc-metricicon">↗</div>
@@ -262,7 +286,7 @@ main{padding:0 34px 70px;max-width:1640px}.cc-workspacebar{height:62px;margin-bo
 </div>
 <div class="cc-metric readiness">
 <div class="cc-metricicon">◒</div>
-<div><small>Gem. readiness</small><b id="mReady">0%</b><span>kwaliteit voorbereiding</span></div>
+<div><small>Gem. gereedheid</small><b id="mReady">0%</b><span>kwaliteit voorbereiding</span></div>
 </div>
 </div>
 <div class="cc-dashboardgrid">
@@ -275,23 +299,14 @@ main{padding:0 34px 70px;max-width:1640px}.cc-workspacebar{height:62px;margin-bo
 </div>
 <aside class="cc-sidepanel">
 <div class="cc-panel cc-prioritypanel">
-<div class="cc-panelhead"><div><span class="cc-kicker">NU BELANGRIJK</span><h3>Aandacht</h3></div><button class="cc-textbtn" onclick="show('cases')">Queue →</button></div>
+<div class="cc-panelhead"><div><span class="cc-kicker">NU BELANGRIJK</span><h3>Aandacht nodig</h3></div><button class="cc-textbtn" onclick="show('cases');setAttentionFilter()">Bekijk alles →</button></div>
 <div class="cc-prioritylist" id="attentionQueue"></div>
 </div>
-<div class="cc-panel">
-<div class="cc-panelhead"><div><span class="cc-kicker">SNEL STARTEN</span><h3>Acties</h3></div></div>
-<div class="cc-actions">
-<button class="cc-action primary-action" onclick="openNew()"><span>＋</span><div><b>Nieuwe case</b><small>Handmatig dossier starten</small></div></button>
-<button class="cc-action" onclick="show('cases');focusCaseSearch()"><span>⌕</span><div><b>Case zoeken</b><small>Zoek klant, nummer of asset</small></div></button>
-<button class="cc-action" id="ownerQuick" onclick="show('owner')"><span>◆</span><div><b>Organisaties</b><small>Klantomgevingen beheren</small></div></button>
-<button class="cc-action" onclick="show('settings')"><span>◇</span><div><b>Klantintake</b><small>Link openen of kopiëren</small></div></button>
-</div>
-</div>
-<div class="cc-panel cc-contextpanel">
-<span class="cc-kicker">ACTIEVE OMGEVING</span>
-<h3 id="dashOrgName">—</h3>
-<p id="dashOrgHint">Cases, KPI's en instellingen op dit scherm horen bij deze organisatie.</p>
-<button class="cc-textbtn" id="switchOrgQuick" onclick="show('owner')">Wissel omgeving →</button>
+<div class="cc-panel cc-nextpanel">
+<span class="cc-kicker">VOLGENDE STAP</span>
+<h3>Werk vanuit de case</h3>
+<p>Open een case om ontbrekende informatie, voorbereiding, toewijzing en uitkomst op één plek af te handelen.</p>
+<button class="btn full" onclick="show('cases')">Naar cases →</button>
 </div>
 </aside>
 </div>
@@ -300,13 +315,28 @@ main{padding:0 34px 70px;max-width:1640px}.cc-workspacebar{height:62px;margin-bo
 <div class="cc-casebar">
 <div class="cc-search"><span aria-hidden="true">⌕</span><input id="caseSearch" type="search" placeholder="Zoek op klant, case, plaats, asset of klacht…" oninput="renderCasesView()"/></div>
 <select id="caseStatusFilter" aria-label="Filter op status" onchange="renderCasesView()"><option value="all">Alle statussen</option><option value="attention">Vraagt aandacht</option><option value="Info ontbreekt">Info ontbreekt</option><option value="Review">Review</option><option value="Ingepland">Ingepland</option><option value="Afgerond">Afgerond</option></select>
-<select id="caseSort" aria-label="Sorteer cases" onchange="renderCasesView()"><option value="priority">Prioriteit</option><option value="recent">Nieuwste eerst</option><option value="readinessAsc">Readiness laag → hoog</option><option value="readinessDesc">Readiness hoog → laag</option></select>
+<select id="caseSort" aria-label="Sorteer cases" onchange="renderCasesView()"><option value="priority">Prioriteit</option><option value="recent">Nieuwste eerst</option><option value="readinessAsc">Gereedheid laag → hoog</option><option value="readinessDesc">Gereedheid hoog → laag</option></select>
 <button class="btn cc-clearfilters" type="button" onclick="clearCaseFilters()">Reset</button>
 </div>
 <div class="cc-case-meta" id="caseResultsMeta"></div>
 <div class="card table cc-casetable" id="casesTable"></div></section>
-<section class="hidden" id="workordersView"><div class="top"><div><div class="eyebrow">Field</div><h2>Werkorders</h2><div class="sub">Monteurweergave: alleen toegewezen cases bij technician-login.</div></div></div><div id="workorders"></div></section>
+<section class="hidden" id="workordersView"><div class="top"><div><div class="eyebrow">Mijn werk</div><h2>Werkorders</h2><div class="sub">Jouw toegewezen opdrachten en voorbereiding voor vertrek.</div></div></div><div id="workorders"></div></section>
 <section class="hidden" id="caseView"><div class="top"><button class="btn" onclick="show('cases')">← Terug</button><button class="btn primary" id="saveBtn" onclick="saveCase()">Opslaan</button></div><div class="grid2 section"><div><div class="card" id="caseMain"></div><div class="card section"><h3>Voor vertrek</h3><div id="prep"></div></div><div class="card section"><h3>Notities</h3><div id="notes"></div><div class="field"><textarea id="noteText" placeholder="Interne notitie..."></textarea></div><button class="btn" onclick="addNote()">Notitie toevoegen</button></div><div class="card section"><h3>Bijlagen</h3><div id="attachments"></div><div class="field"><input accept="image/*,.pdf" id="fileInput" type="file"/></div><button class="btn" onclick="uploadFile()">Upload</button></div><div class="card section"><h3>First-time-fix outcome</h3><div class="sub" id="outcomeCurrent"></div><div class="field"><label><input id="oResolved" type="checkbox"/> In één locatiebezoek opgelost</label></div><div class="field"><label><input id="oRemote" type="checkbox"/> Volledig remote opgelost</label></div><div class="field"><label><input id="oSecond" type="checkbox"/> Tweede bezoek nodig</label></div><div class="field"><label>Welke informatie ontbrak vooraf?</label><input id="oMissingInfo" placeholder="bijv. foutcode of installatietekening"/></div><div class="field"><label>Welk materiaal/onderdeel ontbrak?</label><input id="oMissingMaterial" placeholder="alleen indien van toepassing"/></div><div class="field"><label><input id="oWrongSkill" type="checkbox"/> Verkeerde expertise/monteur ingepland</label></div><div class="field"><label><input id="oPreventable" type="checkbox"/> Tweede rit waarschijnlijk voorkombaar met betere voorbereiding</label></div><div class="field"><label>Werkelijke planner-/voorbereidingstijd voor deze case (minuten)</label><input id="oPlannerMinutes" min="0" placeholder="bijv. 5" step="0.5" type="number"/></div><div class="field"><label>Korte evaluatie</label><textarea id="oNotes"></textarea></div><button class="btn primary" onclick="saveOutcome()">Outcome opslaan</button></div></div><div><div class="card" id="caseSide"></div><div class="card section"><h3>Toewijzing</h3><div class="field"><select id="assignedTo"></select></div><button class="btn" id="assignBtn" onclick="assignCase()">Toewijzen</button></div></div></div></section>
+<section class="hidden" id="pilotHubView">
+<div class="cc-pagehead"><div><div class="eyebrow">Pilot</div><h2>Pilot &amp; resultaten</h2><div class="sub">Voortgang, effect en managementrapportage op één plek.</div></div><button class="btn" onclick="loadPilotHub()">Vernieuwen</button></div>
+<div class="cc-metrics section">
+<div class="cc-metric"><div class="cc-metricicon">✓</div><div><small>First-time-fix</small><b id="phFTF">—</b><span>geregistreerde outcomes</span></div></div>
+<div class="cc-metric"><div class="cc-metricicon">↺</div><div><small>Tweede bezoek</small><b id="phSecond">—</b><span>geregistreerde outcomes</span></div></div>
+<div class="cc-metric"><div class="cc-metricicon">⌁</div><div><small>Remote opgelost</small><b id="phRemote">—</b><span>geregistreerde outcomes</span></div></div>
+<div class="cc-metric readiness"><div class="cc-metricicon">€</div><div><small>Projectie netto / maand</small><b id="phNet">—</b><span>op basis van aannames</span></div></div>
+</div>
+<div class="cc-hubgrid section">
+<button class="cc-hubcard" onclick="show('metrics')"><span class="cc-hubicon">◒</span><div><b>KPI's &amp; businesscase</b><small>Bekijk operationele resultaten, datakwaliteit en economische impact.</small></div><i>→</i></button>
+<button class="cc-hubcard" onclick="show('pilot')"><span class="cc-hubicon">◎</span><div><b>Pilot beheren</b><small>Nulmeting, doelen, snapshots en looptijd van de actieve pilot.</small></div><i>→</i></button>
+<button class="cc-hubcard" onclick="show('report')"><span class="cc-hubicon">▤</span><div><b>Directierapport</b><small>Samenvatting, conclusies en rapportage voor besluitvorming.</small></div><i>→</i></button>
+</div>
+<div class="card section cc-pilot-context"><div><span class="cc-kicker">ACTIEVE PILOT</span><h3 id="phPilotName">Pilotstatus laden…</h3><p class="sub" id="phPilotStatus">—</p></div><button class="cc-textbtn" onclick="show('pilot')">Open pilotbeheer →</button></div>
+</section>
 <section class="hidden" id="metricsView"><div class="top"><div><div class="eyebrow">Pilotmeting</div><h2>KPI's</h2></div></div><div class="grid4"><div class="card metric"><small>Totaal</small><b id="kTotal">0</b></div><div class="card metric"><small>Klantintakes</small><b id="kPublic">0</b></div><div class="card metric"><small>Gem. intake</small><b id="kIntake">0s</b></div><div class="card metric"><small>Compleet bij intake</small><b id="kComplete">0%</b></div></div><div class="grid4 section"><div class="card metric"><small>First-time-fix</small><b id="kFTF">0%</b></div><div class="card metric"><small>Tweede bezoek</small><b id="kSecond">0%</b></div><div class="card metric"><small>Voorkombare tweede rit</small><b id="kPreventable">0%</b></div><div class="card metric"><small>Remote opgelost</small><b id="kRemote">0%</b></div></div><div class="card section"><div class="kv"><span>Planbaar %</span><b id="kScheduled">0%</b></div><div class="kv"><span>Outcomes geregistreerd</span><b id="kOutcomes">0</b></div><div class="sub">De FTF-percentages worden alleen berekend op cases waarvoor een outcome is geregistreerd.</div></div>
 <div class="section"><div class="eyebrow">Economische impact</div><h2 style="font-size:22px">Businesscase</h2><div class="sub">Gemeten besparing en geschatte waarde staan bewust apart.</div></div>
 <div class="grid4 section">
@@ -380,13 +410,24 @@ main{padding:0 34px 70px;max-width:1640px}.cc-workspacebar{height:62px;margin-bo
 <div id="reportContainer"></div>
 </section>
 <section class="hidden" id="settingsView"><div class="cc-pagehead"><div><div class="eyebrow">Klantzijde</div><h2>Klantintake</h2><div class="sub">Eén rustige intake voor klantgegevens, installatie-informatie, klacht en foto.</div></div></div><div class="grid2"><div class="card cc-intake-card"><span class="cc-kicker">DEELBARE LINK</span><h3>Stuur de klant direct naar de intake</h3><p class="sub">De link is gekoppeld aan de actieve organisatie. Nieuwe meldingen komen automatisch als case binnen.</p><div class="linkbox section" id="intakeLink"></div><div class="section cc-inline-actions"><button class="btn" onclick="copyIntakeLink()">Link kopiëren</button><button class="btn primary" onclick="window.open(intakeLink.textContent,'_blank')">Open klantweergave ↗</button></div></div><div class="card cc-intake-preview"><span class="cc-kicker">KLANTERVARING</span><h3>Wat de klant doorloopt</h3><div class="cc-flowstep"><i>1</i><div><b>Contact</b><small>Naam, plaats en contactgegevens</small></div></div><div class="cc-flowstep"><i>2</i><div><b>Installatie &amp; klacht</b><small>Type, merk, model, storing en foto</small></div></div><div class="cc-flowstep"><i>3</i><div><b>Controle &amp; versturen</b><small>Privacy, veiligheidsmelding en bevestiging</small></div></div></div></div></section>
-<section class="hidden" id="productView"><div class="top"><div><div class="eyebrow">Pilot v1.0</div><h2>Productbeheer</h2><div class="sub">Branding, accounts, export en veilige pilot-reset.</div></div><div><span class="pill" id="versionBadge"></span></div></div><div class="grid2 section"><div class="card"><h3>Branding &amp; klantportaal</h3><div class="field"><label>Productnaam / label</label><input id="pbBrandName"/></div><div class="field"><label>Accentkleur</label><input id="pbAccent" placeholder="#62d0ff" type="text"/></div><div class="field"><label>Support e-mail</label><input id="pbSupportEmail" type="email"/></div><div class="field"><label>Privacyverklaring URL</label><input id="pbPrivacyUrl" placeholder="https://bedrijf.nl/privacy" type="url"/></div><div class="field"><label>Titel klantportaal</label><input id="pbPortalTitle"/></div><button class="btn primary" onclick="saveBranding()">Branding opslaan</button></div><div class="card"><h3>Eigen wachtwoord</h3><div class="field"><label>Huidig wachtwoord</label><input id="pwCurrent" type="password"/></div><div class="field"><label>Nieuw wachtwoord</label><input id="pwNew" placeholder="min. 12 tekens" type="password"/></div><button class="btn" onclick="changeOwnPassword()">Wachtwoord wijzigen</button></div></div><div class="card section" id="accountAdminCard"><h3>Accountbeheer</h3><div id="accountList"></div><div class="section grid2"><div><div class="field"><label>Naam</label><input id="accName"/></div><div class="field"><label>E-mail</label><input id="accEmail" type="email"/></div></div><div><div class="field"><label>Rol</label><select id="accRole"><option value="planner">Planner</option><option value="technician">Monteur</option><option value="admin">Admin</option></select></div><div class="field"><label>Tijdelijk wachtwoord</label><input id="accPassword" placeholder="min. 12 tekens" type="password"/></div></div></div><button class="btn primary" onclick="createAccount()">Account toevoegen</button></div><div class="grid2 section"><div class="card"><h3>Export / backup</h3><div class="sub">Operationele JSON-export zonder wachtwoordhashes en zonder bestandbytes.</div><div class="section"><button class="btn primary" onclick="downloadOperationalExport()">JSON-export downloaden</button></div></div><div class="card"><h3>Pilot reset</h3><div class="sub">Verwijdert cases, notities, bijlagen, audit en pilotdata. Accounts en bedrijfsinstellingen blijven bestaan.</div><div class="field"><label>Typ exact: RESET PILOT DATA</label><input id="resetConfirm"/></div><button class="btn" onclick="resetPilotData()">Pilotdata resetten</button></div></div></section>
+<section class="hidden" id="beheerView">
+<div class="cc-pagehead"><div><div class="eyebrow">Beheer</div><h2>Instellingen &amp; beheer</h2><div class="sub">Functies die je niet tijdens het dagelijkse casewerk nodig hebt.</div></div></div>
+<div class="cc-managegrid section">
+<button class="cc-managecard" id="manageOrganizations" onclick="show('owner')"><span>◆</span><div><b>Organisaties</b><small>Klantomgevingen openen, aanmaken of pauzeren.</small></div><i>→</i></button>
+<button class="cc-managecard" id="manageTeam" onclick="show('team')"><span>○</span><div><b>Team</b><small>Bekijk gebruikers binnen de actieve organisatie.</small></div><i>→</i></button>
+<button class="cc-managecard" id="manageProduct" onclick="show('product')"><span>⚙</span><div><b>Productinstellingen</b><small>Branding, accounts, wachtwoord, export en reset.</small></div><i>→</i></button>
+<button class="cc-managecard" id="manageSystem" onclick="show('system')"><span>●</span><div><b>Systeemstatus</b><small>Database, opslag, runtime en versie controleren.</small></div><i>→</i></button>
+<button class="cc-managecard" id="manageAudit" onclick="show('audit')"><span>≡</span><div><b>Auditlog</b><small>Bekijk recente activiteiten in de actieve omgeving.</small></div><i>→</i></button>
+<button class="cc-managecard" id="manageOnboarding" onclick="openOnboardingFromManage()"><span>＋</span><div><b>Onboarding</b><small>Servicefocus, merken, pilotdoelen en startinstellingen.</small></div><i>→</i></button>
+</div>
+</section>
+<section class="hidden" id="productView"><div class="top"><div><div class="eyebrow">Beheer</div><h2>Productinstellingen</h2><div class="sub">Branding, accounts, export en veilige gegevensreset.</div></div><div><span class="pill" id="versionBadge"></span></div></div><div class="grid2 section"><div class="card"><h3>Branding &amp; klantportaal</h3><div class="field"><label>Productnaam / label</label><input id="pbBrandName"/></div><div class="field"><label>Accentkleur</label><input id="pbAccent" placeholder="#62d0ff" type="text"/></div><div class="field"><label>Support e-mail</label><input id="pbSupportEmail" type="email"/></div><div class="field"><label>Privacyverklaring URL</label><input id="pbPrivacyUrl" placeholder="https://bedrijf.nl/privacy" type="url"/></div><div class="field"><label>Titel klantportaal</label><input id="pbPortalTitle"/></div><button class="btn primary" onclick="saveBranding()">Branding opslaan</button></div><div class="card"><h3>Eigen wachtwoord</h3><div class="field"><label>Huidig wachtwoord</label><input id="pwCurrent" type="password"/></div><div class="field"><label>Nieuw wachtwoord</label><input id="pwNew" placeholder="min. 12 tekens" type="password"/></div><button class="btn" onclick="changeOwnPassword()">Wachtwoord wijzigen</button></div></div><div class="card section" id="accountAdminCard"><h3>Accountbeheer</h3><div id="accountList"></div><div class="section grid2"><div><div class="field"><label>Naam</label><input id="accName"/></div><div class="field"><label>E-mail</label><input id="accEmail" type="email"/></div></div><div><div class="field"><label>Rol</label><select id="accRole"><option value="planner">Planner</option><option value="technician">Monteur</option><option value="admin">Admin</option></select></div><div class="field"><label>Tijdelijk wachtwoord</label><input id="accPassword" placeholder="min. 12 tekens" type="password"/></div></div></div><button class="btn primary" onclick="createAccount()">Account toevoegen</button></div><div class="grid2 section"><div class="card"><h3>Export / backup</h3><div class="sub">Operationele JSON-export zonder wachtwoordhashes en zonder bestandbytes.</div><div class="section"><button class="btn primary" onclick="downloadOperationalExport()">JSON-export downloaden</button></div></div><div class="card"><h3>Pilot reset</h3><div class="sub">Verwijdert cases, notities, bijlagen, audit en pilotdata. Accounts en bedrijfsinstellingen blijven bestaan.</div><div class="field"><label>Typ exact: RESET PILOT DATA</label><input id="resetConfirm"/></div><button class="btn" onclick="resetPilotData()">Pilotdata resetten</button></div></div></section>
 <section class="hidden" id="systemView">
 <div class="top">
 <div>
-<div class="eyebrow">Owner monitor</div>
+<div class="eyebrow">Technisch beheer</div>
 <h2>Systeemstatus</h2>
-<div class="sub">Live controle van Werkstuur, database en private opslag. Alleen zichtbaar voor admins.</div>
+<div class="sub">Controleer Werkstuur, database en private opslag.</div>
 </div>
 <button class="btn" onclick="loadSystemStatus()">Nu controleren</button>
 </div>
@@ -419,9 +460,9 @@ main{padding:0 34px 70px;max-width:1640px}.cc-workspacebar{height:62px;margin-bo
 <section class="hidden" id="ownerView">
 <div class="cc-pagehead">
 <div>
-<div class="eyebrow">Platformbeheer</div>
-<h2>Werkstuur Beheer</h2>
-<div class="sub">Organisaties, pilots en toegang vanuit één rustig overzicht.</div>
+<div class="eyebrow">Werkstuur</div>
+<h2>Organisaties</h2>
+<div class="sub">Open en beheer klantomgevingen vanuit één overzicht.</div>
 </div>
 <button class="btn" onclick="loadOwnerConsole()">Vernieuwen</button>
 </div>
