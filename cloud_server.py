@@ -14,6 +14,9 @@ import io
 import json
 import mimetypes
 import os
+import smtplib
+import ssl
+import html as html_lib
 import re
 import secrets
 import sys
@@ -22,8 +25,10 @@ import time
 from collections import Counter, defaultdict
 from datetime import datetime, timezone, timedelta, date
 from http.server import ThreadingHTTPServer, BaseHTTPRequestHandler
+from email.message import EmailMessage
+from email.utils import formataddr
 from pathlib import Path
-from urllib.parse import urlparse, parse_qs
+from urllib.parse import urlparse, parse_qs, quote
 
 from supabase import create_client, Client
 import httpx
@@ -34,13 +39,36 @@ ROOT = Path(__file__).resolve().parent
 STATIC = (ROOT / "static") if (ROOT / "static").is_dir() else ROOT
 
 APP_NAME = "Werkstuur"
-APP_VERSION = "1.3.1-ux-cleanup"
+APP_VERSION = "1.4.0-launch-ready"
 APP_BUILD = "2026-10-04"
 BUCKET = os.environ.get("SUPABASE_STORAGE_BUCKET", "preflight-attachments")
 MAX_BODY = 7 * 1024 * 1024
 SESSION_HOURS = int(os.environ.get("SESSION_HOURS", "12"))
 COOKIE_SECURE = os.environ.get("COOKIE_SECURE", "1") not in ("0","false","False")
 PORT = int(os.environ.get("PORT", "10000"))
+
+def _env_int(name, default):
+    try:return int(os.environ.get(name,str(default)))
+    except Exception:return int(default)
+
+SMTP_HOST = os.environ.get("SMTP_HOST", "mail.werkstuur.nl").strip()
+SMTP_PORT = _env_int("SMTP_PORT", 465)
+SMTP_USERNAME = os.environ.get("SMTP_USERNAME", "").strip()
+SMTP_PASSWORD = os.environ.get("SMTP_PASSWORD", "")
+SMTP_SECURITY = os.environ.get("SMTP_SECURITY", "ssl").strip().lower()
+SMTP_FROM_EMAIL = os.environ.get("SMTP_FROM_EMAIL", SMTP_USERNAME).strip()
+SMTP_FROM_NAME = os.environ.get("SMTP_FROM_NAME", "Werkstuur").strip() or "Werkstuur"
+SMTP_REPLY_TO = os.environ.get("SMTP_REPLY_TO", "support@werkstuur.nl").strip()
+MAIL_NOTIFICATIONS_ENABLED = os.environ.get("MAIL_NOTIFICATIONS_ENABLED", "1") not in ("0","false","False","no","off")
+APP_PUBLIC_URL = (os.environ.get("APP_PUBLIC_URL") or os.environ.get("RENDER_EXTERNAL_URL") or "https://app.werkstuur.nl").rstrip("/")
+WEBSITE_URL = (os.environ.get("WEBSITE_URL") or "https://werkstuur.nl").rstrip("/")
+PASSWORD_RESET_MINUTES = max(10, min(120, _env_int("PASSWORD_RESET_MINUTES", 30)))
+PUBLIC_SITE_ORIGINS = {x.strip().rstrip("/") for x in os.environ.get("PUBLIC_SITE_ORIGINS", "https://werkstuur.nl,https://www.werkstuur.nl").split(",") if x.strip()}
+SALES_EMAIL = os.environ.get("SALES_EMAIL", "manuel@werkstuur.nl").strip()
+
+_MAIL_LOCK = threading.Lock()
+_LAST_MAIL_ERROR = None
+_LAST_MAIL_SUCCESS = None
 
 _PROCESS_STARTED_AT = time.time()
 _PROCESS_STARTED_ISO = now_marker = datetime.now(timezone.utc).isoformat()
@@ -118,7 +146,10 @@ def system_status_payload(user=None):
     else:
         storage = {"status": "unknown", "bucket": BUCKET, "latency_ms": None}
 
-    overall = "healthy" if database["status"] == "online" and storage["status"] == "online" else "degraded"
+    mail = mail_status_payload()
+    core_ok = database["status"] == "online" and storage["status"] == "online"
+    mail_ok = mail["status"] in ("ready","disabled")
+    overall = "healthy" if core_ok and mail_ok else "degraded"
     if current_error:
         _record_server_error("system_status", current_error)
     else:
@@ -142,6 +173,7 @@ def system_status_payload(user=None):
         },
         "database": database,
         "storage": storage,
+        "mail": mail,
         "counts": counts,
         "hosting": {
             "provider": "Render",
@@ -211,6 +243,194 @@ class _SupabaseProxy:
         return getattr(_get_supabase_client(), name)
 
 sb = _SupabaseProxy()
+
+def _valid_email(value):
+    value=str(value or "").strip()
+    return value if re.match(r"^[^@\s]+@[^@\s]+\.[^@\s]+$", value) else ""
+
+def _mail_configured():
+    return bool(MAIL_NOTIFICATIONS_ENABLED and SMTP_HOST and SMTP_PORT and SMTP_USERNAME and SMTP_PASSWORD and SMTP_FROM_EMAIL)
+
+def _record_mail_result(ok, detail=""):
+    global _LAST_MAIL_ERROR, _LAST_MAIL_SUCCESS
+    with _MAIL_LOCK:
+        if ok:
+            _LAST_MAIL_SUCCESS=datetime.now(timezone.utc).isoformat()
+            _LAST_MAIL_ERROR=None
+        else:
+            _LAST_MAIL_ERROR={"at":datetime.now(timezone.utc).isoformat(),"message":str(detail or "onbekende e-mailfout")[:220]}
+
+def mail_status_payload():
+    with _MAIL_LOCK:
+        last_success=_LAST_MAIL_SUCCESS
+        last_error=dict(_LAST_MAIL_ERROR) if _LAST_MAIL_ERROR else None
+    if not MAIL_NOTIFICATIONS_ENABLED:
+        status="disabled"
+    elif _mail_configured():
+        status="ready"
+    else:
+        status="not_configured"
+    return {
+        "status":status,
+        "configured":_mail_configured(),
+        "enabled":MAIL_NOTIFICATIONS_ENABLED,
+        "host":SMTP_HOST,
+        "port":SMTP_PORT,
+        "security":SMTP_SECURITY,
+        "from_email":SMTP_FROM_EMAIL,
+        "last_success":last_success,
+        "last_error":last_error,
+    }
+
+def _email_shell(title, intro, rows=None, cta_label=None, cta_url=None, footer=None):
+    safe_title=html_lib.escape(str(title))
+    safe_intro=html_lib.escape(str(intro))
+    row_html=""
+    for label,value in (rows or []):
+        row_html += f'<tr><td style="padding:7px 0;color:#667987;font-size:13px">{html_lib.escape(str(label))}</td><td style="padding:7px 0;text-align:right;color:#0b1b2b;font-size:13px;font-weight:700">{html_lib.escape(str(value))}</td></tr>'
+    table_html=(f'<table style="width:100%;border-collapse:collapse;border-top:1px solid #e8eef2;border-bottom:1px solid #e8eef2;margin:18px 0">{row_html}</table>' if row_html else '')
+    cta=""
+    if cta_label and cta_url:
+        cta=f'<p style="margin:24px 0 8px"><a href="{html_lib.escape(str(cta_url),quote=True)}" style="display:inline-block;background:#0b1b2b;color:#fff;text-decoration:none;border-radius:10px;padding:12px 16px;font-size:13px;font-weight:700">{html_lib.escape(str(cta_label))}</a></p>'
+    footer_html=html_lib.escape(str(footer or "Werkstuur · van melding naar een werkbare opdracht."))
+    return ('<!doctype html><html><body style="margin:0;background:#f3f7f9;font-family:Arial,sans-serif;color:#0b1b2b">'
+            '<div style="max-width:620px;margin:0 auto;padding:28px 14px"><div style="background:#fff;border:1px solid #dfe8ee;border-radius:18px;padding:26px">'
+            '<div style="font-size:11px;letter-spacing:.14em;color:#3084a8;font-weight:800;margin-bottom:10px">WERKSTUUR</div>'
+            f'<h1 style="font-size:24px;line-height:1.2;margin:0 0 12px">{safe_title}</h1>'
+            f'<p style="font-size:14px;line-height:1.65;color:#526978;margin:0 0 16px">{safe_intro}</p>'
+            f'{table_html}{cta}<p style="font-size:11px;color:#82929d;line-height:1.55;margin:22px 0 0">{footer_html}</p>'
+            '</div></div></body></html>')
+
+def _send_email(to, subject, text_body, html_body=None, reply_to=None):
+    recipients=[]
+    for item in (to if isinstance(to,(list,tuple,set)) else [to]):
+        addr=_valid_email(item)
+        if addr and addr.lower() not in [x.lower() for x in recipients]:recipients.append(addr)
+    if not recipients:return {"ok":False,"reason":"no_recipients"}
+    if not _mail_configured():return {"ok":False,"reason":"not_configured"}
+    msg=EmailMessage()
+    msg["Subject"]=str(subject)[:180]
+    msg["From"]=formataddr((SMTP_FROM_NAME,SMTP_FROM_EMAIL))
+    msg["To"]=", ".join(recipients)
+    rt=_valid_email(reply_to or SMTP_REPLY_TO)
+    if rt:msg["Reply-To"]=rt
+    msg.set_content(str(text_body))
+    if html_body:msg.add_alternative(str(html_body),subtype="html")
+    context=ssl.create_default_context()
+    try:
+        if SMTP_SECURITY=="ssl":
+            with smtplib.SMTP_SSL(SMTP_HOST,SMTP_PORT,timeout=15,context=context) as client:
+                client.login(SMTP_USERNAME,SMTP_PASSWORD);client.send_message(msg)
+        else:
+            with smtplib.SMTP(SMTP_HOST,SMTP_PORT,timeout=15) as client:
+                client.ehlo()
+                if SMTP_SECURITY in ("tls","starttls"):
+                    client.starttls(context=context);client.ehlo()
+                client.login(SMTP_USERNAME,SMTP_PASSWORD);client.send_message(msg)
+        _record_mail_result(True)
+        return {"ok":True,"recipients":len(recipients)}
+    except Exception as exc:
+        _record_mail_result(False,_sanitize_error_message(exc))
+        return {"ok":False,"reason":"send_failed"}
+
+def _queue_email(to, subject, text_body, html_body=None, reply_to=None):
+    if not _mail_configured():return False
+    def runner():
+        try:_send_email(to,subject,text_body,html_body,reply_to)
+        except Exception as exc:_record_mail_result(False,_sanitize_error_message(exc))
+    threading.Thread(target=runner,daemon=True,name="werkstuur-mail").start()
+    return True
+
+def _organization_contact(org_id):
+    org=organization_by_id(org_id) or {}
+    support=_valid_email(org.get("support_email") or get_setting("support_email","",organization_id=org_id) or SMTP_REPLY_TO)
+    return org,support
+
+def queue_public_intake_emails(org_id,row,missing,score):
+    if not _mail_configured():return {"customer":False,"planner":False}
+    org,support=_organization_contact(org_id)
+    org_name=org.get("name") or get_setting("company_name","de serviceorganisatie",organization_id=org_id)
+    case_no=row.get("case_no") or "—"
+    customer_email=_valid_email(row.get("email"))
+    queued_customer=False
+    if customer_email:
+        subject=f"Melding ontvangen · {case_no}"
+        intro=f"Je servicemelding bij {org_name} is ontvangen. Bewaar onderstaande referentie; je hoeft de melding niet opnieuw te versturen."
+        rows=[("Referentie",case_no),("Type",row.get("type") or "—"),("Status","Wordt beoordeeld")]
+        if missing:rows.append(("Vervolg",f"Mogelijk nog {len(missing)} aanvulling(en) nodig"))
+        text=f"{intro}\n\nReferentie: {case_no}\nType: {row.get('type') or '—'}\n\n{('Er kan contact met je worden opgenomen voor aanvullende informatie.' if missing else 'De melding bevat voldoende informatie voor de eerste beoordeling.')}"
+        queued_customer=_queue_email(customer_email,subject,text,_email_shell("Melding ontvangen",intro,rows,footer=f"Vragen? Neem contact op via {support or 'de serviceorganisatie'}."),reply_to=support)
+    users=resp_data(sb.table("users").select("email,role,active").eq("organization_id",org_id).eq("active",True).execute())
+    planner_recipients=[_valid_email(x.get("email")) for x in users if x.get("role") in ("admin","planner")]
+    planner_recipients=[x for x in planner_recipients if x]
+    if support:planner_recipients.append(support)
+    planner_recipients=list(dict.fromkeys(planner_recipients))[:12]
+    queued_planner=False
+    if planner_recipients:
+        subject=f"Nieuwe klantintake · {case_no} · {row.get('customer') or 'Klant'}"
+        intro="Er is een nieuwe klantintake binnengekomen in Werkstuur. Open de omgeving om de melding te beoordelen en waar nodig informatie aan te vullen."
+        rows=[("Case",case_no),("Klant",row.get("customer") or "—"),("Type",row.get("type") or "—"),("Gereedheid",f"{int(score or 0)}%"),("Ontbreekt",str(len(missing or [])))]
+        text=f"Nieuwe Werkstuur-intake\nCase: {case_no}\nKlant: {row.get('customer') or '—'}\nType: {row.get('type') or '—'}\nGereedheid: {int(score or 0)}%\nOntbrekende punten: {len(missing or [])}\n\nOpen: {APP_PUBLIC_URL}"
+        queued_planner=_queue_email(planner_recipients,subject,text,_email_shell("Nieuwe klantintake",intro,rows,"Open Werkstuur",APP_PUBLIC_URL),reply_to=customer_email or support)
+    return {"customer":queued_customer,"planner":queued_planner}
+
+def queue_account_welcome(row):
+    if not _mail_configured():return False
+    email=_valid_email(row.get("email"))
+    if not email:return False
+    try:org=organization_by_id(row.get("organization_id")) or {}
+    except Exception:org={}
+    intro=f"Er is een Werkstuur-account voor je aangemaakt voor {org.get('name') or 'jouw organisatie'}. Gebruik het tijdelijke wachtwoord dat je van je beheerder ontvangt en wijzig dit na je eerste login."
+    rows=[("Account",email),("Rol",row.get("role") or "gebruiker")]
+    text=f"Je Werkstuur-account is aangemaakt.\n\nInloggen: {APP_PUBLIC_URL}\nAccount: {email}\n\nGebruik het tijdelijke wachtwoord van je beheerder en wijzig dit na de eerste login."
+    return _queue_email(email,"Je Werkstuur-account is aangemaakt",text,_email_shell("Welkom bij Werkstuur",intro,rows,"Inloggen",APP_PUBLIC_URL))
+
+def queue_password_changed_notice(row,by_admin=False):
+    if not _mail_configured():return False
+    email=_valid_email(row.get("email"))
+    if not email:return False
+    intro="Het wachtwoord van je Werkstuur-account is gewijzigd." + (" Dit is uitgevoerd door een beheerder." if by_admin else "") + " Was jij dit niet, neem dan direct contact op met je beheerder."
+    text=f"{intro}\n\nWerkstuur: {APP_PUBLIC_URL}"
+    return _queue_email(email,"Werkstuur-wachtwoord gewijzigd",text,_email_shell("Wachtwoord gewijzigd",intro,[("Account",email)],"Naar Werkstuur",APP_PUBLIC_URL))
+
+def _reset_secret():
+    raw=os.environ.get("PASSWORD_RESET_SECRET") or SUPABASE_SECRET_KEY
+    return hashlib.sha256(("werkstuur-password-reset|"+raw).encode()).digest()
+
+def _b64url(data):return base64.urlsafe_b64encode(data).rstrip(b"=").decode()
+def _b64url_decode(value):
+    value=str(value);return base64.urlsafe_b64decode(value+"="*((4-len(value)%4)%4))
+
+def create_password_reset_token(row):
+    fp=hashlib.sha256(str(row.get("password_hash") or "").encode()).hexdigest()[:24]
+    payload={"uid":int(row["id"]),"exp":int(time.time())+PASSWORD_RESET_MINUTES*60,"fp":fp,"nonce":secrets.token_hex(8)}
+    raw=json.dumps(payload,separators=(",",":"),sort_keys=True).encode()
+    part=_b64url(raw);sig=_b64url(hmac.new(_reset_secret(),part.encode(),hashlib.sha256).digest())
+    return part+"."+sig
+
+def verify_password_reset_token(token):
+    try:
+        part,sig=str(token or "").split(".",1)
+        expected=_b64url(hmac.new(_reset_secret(),part.encode(),hashlib.sha256).digest())
+        if not hmac.compare_digest(sig,expected):return None
+        payload=json.loads(_b64url_decode(part))
+        if int(payload.get("exp") or 0)<int(time.time()):return None
+        row=first(sb.table("users").select("*").eq("id",int(payload.get("uid") or 0)).limit(1).execute())
+        if not row or not row.get("active"):return None
+        fp=hashlib.sha256(str(row.get("password_hash") or "").encode()).hexdigest()[:24]
+        if not hmac.compare_digest(str(payload.get("fp") or ""),fp):return None
+        return row
+    except Exception:return None
+
+def queue_password_reset(row):
+    if not _mail_configured():return False
+    email=_valid_email(row.get("email"))
+    if not email:return False
+    token=create_password_reset_token(row)
+    reset_url=f"{APP_PUBLIC_URL}/?reset={quote(token)}"
+    intro=f"Er is een verzoek gedaan om het wachtwoord van je Werkstuur-account opnieuw in te stellen. De link is {PASSWORD_RESET_MINUTES} minuten geldig."
+    text=f"{intro}\n\nWachtwoord herstellen: {reset_url}\n\nHeb je dit niet aangevraagd? Dan kun je deze e-mail negeren."
+    return _queue_email(email,"Werkstuur · wachtwoord herstellen",text,_email_shell("Wachtwoord herstellen",intro,[("Geldig",f"{PASSWORD_RESET_MINUTES} minuten")],"Nieuw wachtwoord instellen",reset_url,"Heb je dit niet aangevraagd? Dan hoef je niets te doen."))
 
 _org_local = threading.local()
 
@@ -719,6 +939,7 @@ def create_team_user(email,name,role,password):
         "email":email,"display_name":name,"role":role,"organization_id":current_org_id(required=True),"is_platform_owner":False,
         "password_hash":core.hash_password(password),"active":True,"created_at":now_iso()
     }).execute())
+    queue_account_welcome(row)
     return row,True
 
 
@@ -799,16 +1020,17 @@ def create_organization(body):
             raise ValueError("tijdelijk adminwachtwoord minimaal 12 tekens")
         if find_user_by_email(admin_email):
             raise ValueError("e-mailadres bestaat al")
-        sb.table("users").insert({
+        admin_row=first(sb.table("users").insert({
             "email":admin_email,"display_name":admin_name,"role":"admin",
             "organization_id":org["id"],"is_platform_owner":False,
             "password_hash":core.hash_password(admin_password),"active":True,"created_at":now_iso()
-        }).execute()
+        }).execute())
+        queue_account_welcome(admin_row)
     return org
 
 
 class Handler(BaseHTTPRequestHandler):
-    server_version="WerkstuurCloud/1.1"
+    server_version="WerkstuurCloud/1.4"
 
     def log_message(self, fmt, *args):
         message = fmt % args
@@ -825,6 +1047,13 @@ class Handler(BaseHTTPRequestHandler):
         self.send_header("X-Robots-Tag","noindex, nofollow, noarchive")
         self.send_header("Content-Security-Policy","default-src 'self'; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'; connect-src 'self'; frame-ancestors 'none'; base-uri 'self'")
 
+    def _cors_headers(self):
+        origin=(self.headers.get("Origin") or "").rstrip("/")
+        path=urlparse(self.path).path
+        if path=="/api/public-contact" and origin in PUBLIC_SITE_ORIGINS:
+            return {"Access-Control-Allow-Origin":origin,"Vary":"Origin","Access-Control-Allow-Headers":"Content-Type","Access-Control-Allow-Methods":"POST, OPTIONS"}
+        return {}
+
     def _json(self,obj,status=200,extra_headers=None):
         raw=json.dumps(obj,ensure_ascii=False,default=str).encode()
         self.send_response(status)
@@ -832,7 +1061,8 @@ class Handler(BaseHTTPRequestHandler):
         self.send_header("Content-Length",str(len(raw)))
         self.send_header("Cache-Control","no-store")
         self._security_headers()
-        for k,v in (extra_headers or {}).items():self.send_header(k,v)
+        headers={**self._cors_headers(),**(extra_headers or {})}
+        for k,v in headers.items():self.send_header(k,v)
         self.end_headers();self.wfile.write(raw)
 
     def _body(self):
@@ -867,11 +1097,24 @@ class Handler(BaseHTTPRequestHandler):
 
     def _check_origin(self):
         if self.command in ("GET","HEAD","OPTIONS"):return True
-        origin=self.headers.get("Origin")
+        origin=(self.headers.get("Origin") or "").rstrip("/")
         host=self.headers.get("Host")
         if not origin:return True
+        path=urlparse(self.path).path
+        if path=="/api/public-contact" and origin in PUBLIC_SITE_ORIGINS:return True
         try:return urlparse(origin).netloc==host
         except:return False
+
+    def do_OPTIONS(self):
+        path=urlparse(self.path).path
+        if path=="/api/public-contact":
+            origin=(self.headers.get("Origin") or "").rstrip("/")
+            if origin not in PUBLIC_SITE_ORIGINS:
+                self.send_response(403);self.end_headers();return
+            self.send_response(204)
+            for k,v in self._cors_headers().items():self.send_header(k,v)
+            self._security_headers();self.end_headers();return
+        self.send_response(204);self._security_headers();self.end_headers()
 
     def _client_ip(self):
         forwarded=(self.headers.get("X-Forwarded-For") or "").split(",")[0].strip()
@@ -1042,8 +1285,30 @@ class Handler(BaseHTTPRequestHandler):
             path=urlparse(self.path).path
             # Public attack surface: bound repeated login attempts and intake spam.
             if path=="/api/login" and not self._rate_limit("login",10,600):return
+            if path=="/api/forgot-password" and not self._rate_limit("forgot-password",5,900):return
+            if path=="/api/reset-password" and not self._rate_limit("reset-password",10,900):return
             if path=="/api/public-intake" and not self._rate_limit("public-intake",30,3600):return
+            if path=="/api/public-contact" and not self._rate_limit("public-contact",8,3600):return
             body=self._body()
+            if path=="/api/public-contact":
+                # Honeypot: bots usually populate hidden website fields.
+                if str(body.get("website") or "").strip():return self._json({"ok":True})
+                name=str(body.get("name") or "").strip()[:120]
+                email=_valid_email(body.get("email"))
+                company=str(body.get("company") or "").strip()[:160]
+                message=str(body.get("message") or "").strip()[:3000]
+                if not name or not email or len(message)<8:
+                    return self._json({"error":"vul naam, geldig e-mailadres en een kort bericht in"},400)
+                if not _mail_configured():
+                    return self._json({"error":"contactformulier tijdelijk niet beschikbaar; mail naar manuel@werkstuur.nl"},503)
+                intro="Er is een nieuwe kennismakingsaanvraag binnengekomen via werkstuur.nl."
+                rows=[("Naam",name),("Bedrijf",company or "—"),("E-mail",email)]
+                text=f"{intro}\n\nNaam: {name}\nBedrijf: {company or '-'}\nE-mail: {email}\n\nBericht:\n{message}"
+                html=_email_shell("Nieuwe kennismakingsaanvraag",intro,rows,footer=message)
+                result=_send_email(SALES_EMAIL,"Nieuwe kennismakingsaanvraag · Werkstuur",text,html,reply_to=email)
+                if not result.get("ok"):
+                    return self._json({"error":"verzenden is tijdelijk niet gelukt; mail naar manuel@werkstuur.nl"},503)
+                return self._json({"ok":True})
             if path=="/api/login":
                 email=str(body.get("email","")).lower().strip();pwd=str(body.get("password",""))
                 row=find_user_by_email(email)
@@ -1062,6 +1327,26 @@ class Handler(BaseHTTPRequestHandler):
                 cookie="pf_session=; HttpOnly; SameSite=Lax; Path=/; Max-Age=0"
                 if COOKIE_SECURE:cookie+="; Secure"
                 return self._json({"ok":True},200,{"Set-Cookie":cookie})
+            if path=="/api/forgot-password":
+                email=str(body.get("email") or "").lower().strip()
+                row=find_user_by_email(email) if _valid_email(email) else None
+                if row and row.get("active"):
+                    _set_org_context(row.get("organization_id"))
+                    queue_password_reset(row)
+                    try:create_audit(None,row["id"],"password_reset_requested","self-service")
+                    except Exception:pass
+                return self._json({"ok":True,"message":"Als dit e-mailadres bij een actief account hoort, is een herstelmail verstuurd."})
+            if path=="/api/reset-password":
+                row=verify_password_reset_token(body.get("token"))
+                new_password=str(body.get("new_password") or "")
+                if not row:return self._json({"error":"de herstel-link is ongeldig of verlopen"},400)
+                if len(new_password)<12:return self._json({"error":"nieuw wachtwoord minimaal 12 tekens"},400)
+                _set_org_context(row.get("organization_id"))
+                sb.table("users").update({"password_hash":core.hash_password(new_password)}).eq("id",row["id"]).execute()
+                sb.table("sessions").delete().eq("user_id",row["id"]).execute()
+                create_audit(None,row["id"],"password_reset_completed","self-service")
+                queue_password_changed_notice(row)
+                return self._json({"ok":True})
             if path=="/api/public-intake":
                 if body.get("privacy_acknowledged") is not True:return self._json({"error":"privacy-informatie moet eerst worden bevestigd"},400)
                 token=str(body.get("token",""))
@@ -1096,7 +1381,10 @@ class Handler(BaseHTTPRequestHandler):
                         sb.storage.from_(BUCKET).upload(path=storage_path,file=io.BytesIO(raw),file_options={"content-type":file.get("type") or "application/octet-stream","upsert":"false"})
                         sb.table("attachments").insert({"organization_id":org_id,"case_id":row["id"],"filename":name,"storage_path":storage_path,"content_type":file.get("type") or "application/octet-stream","size_bytes":len(raw),"created_at":now_iso()}).execute()
                 create_audit(row["id"],None,"public_intake","customer self-service; privacy_notice_acknowledged")
-                return self._json({"ok":True,"case_no":case_no,"score":score,"missing":missing,"route":fault["category"]},201)
+                try:mail_queued=queue_public_intake_emails(org_id,row,missing,score)
+                except Exception as exc:
+                    _record_mail_result(False,_sanitize_error_message(exc));mail_queued={"customer":False,"planner":False}
+                return self._json({"ok":True,"case_no":case_no,"score":score,"missing":missing,"route":fault["category"],"confirmation_email_queued":bool(mail_queued.get("customer")),"planner_email_queued":bool(mail_queued.get("planner"))},201)
 
 
             if path=="/api/owner/organizations":
@@ -1119,6 +1407,12 @@ class Handler(BaseHTTPRequestHandler):
             u=self._need()
             if not u:return
 
+            if path=="/api/test-email":
+                if u["role"]!="admin":return self._json({"error":"forbidden"},403)
+                if not _mail_configured():return self._json({"error":"SMTP is nog niet volledig geconfigureerd"},503)
+                intro="Deze test bevestigt dat Werkstuur transactionele e-mail via de ingestelde SMTP-server kan versturen."
+                result=_send_email(u.get("email"),"Werkstuur · testmail",intro,_email_shell("E-mailkoppeling werkt",intro,[('Account',u.get('email') or '—')]),reply_to=SMTP_REPLY_TO)
+                return self._json({"ok":bool(result.get("ok"))},200 if result.get("ok") else 503)
             if path=="/api/change-password":
                 current=str(body.get("current_password") or "");new=str(body.get("new_password") or "")
                 if len(new)<12:return self._json({"error":"nieuw wachtwoord minimaal 12 tekens"},400)
@@ -1127,6 +1421,7 @@ class Handler(BaseHTTPRequestHandler):
                 sb.table("users").update({"password_hash":core.hash_password(new)}).eq("id",u["id"]).execute()
                 sb.table("sessions").delete().eq("user_id",u["id"]).execute()
                 create_audit(None,u["id"],"password_changed","self-service")
+                queue_password_changed_notice(row)
                 cookie="pf_session=; HttpOnly; SameSite=Lax; Path=/; Max-Age=0"
                 if COOKIE_SECURE:cookie+="; Secure"
                 return self._json({"ok":True,"relogin_required":True},200,{"Set-Cookie":cookie})
@@ -1135,13 +1430,26 @@ class Handler(BaseHTTPRequestHandler):
                 try:row,created=create_team_user(body.get("email"),body.get("display_name"),body.get("role"),body.get("password"))
                 except ValueError as e:return self._json({"error":str(e)},400)
                 return self._json({"created":created,"user":{k:v for k,v in row.items() if k!="password_hash"}},201 if created else 200)
+            if path.startswith("/api/accounts/") and path.endswith("/send-reset-link"):
+                if u["role"]!="admin":return self._json({"error":"forbidden"},403)
+                uid=int(path.split("/")[3])
+                target=first(sb.table("users").select("*").eq("organization_id",current_org_id(required=True)).eq("id",uid).limit(1).execute())
+                if not target:return self._json({"error":"account niet gevonden"},404)
+                if not _mail_configured():return self._json({"error":"transactionele e-mail is nog niet geconfigureerd"},503)
+                queued=queue_password_reset(target)
+                if queued:create_audit(None,u["id"],"password_reset_link_sent",str(uid))
+                return self._json({"ok":bool(queued)},200 if queued else 503)
             if path.startswith("/api/accounts/") and path.endswith("/reset-password"):
                 if u["role"]!="admin":return self._json({"error":"forbidden"},403)
                 uid=int(path.split("/")[3]);new=str(body.get("new_password") or "")
                 if len(new)<12:return self._json({"error":"nieuw wachtwoord minimaal 12 tekens"},400)
+                target=first(sb.table("users").select("*").eq("organization_id",current_org_id(required=True)).eq("id",uid).limit(1).execute())
+                if not target:return self._json({"error":"account niet gevonden"},404)
                 sb.table("users").update({"password_hash":core.hash_password(new)}).eq("organization_id",current_org_id(required=True)).eq("id",uid).execute()
                 sb.table("sessions").delete().eq("user_id",uid).execute()
-                create_audit(None,u["id"],"admin_password_reset",str(uid));return self._json({"ok":True})
+                create_audit(None,u["id"],"admin_password_reset",str(uid))
+                queue_password_changed_notice(target,by_admin=True)
+                return self._json({"ok":True})
             if path=="/api/onboarding":
                 if u["role"] not in ("admin","planner"):return self._json({"error":"forbidden"},403)
                 company=str(body.get("company_name") or "").strip()

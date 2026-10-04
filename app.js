@@ -1,4 +1,4 @@
-let token=null,me=null,cases=[],users=[],current=null,settings=null,attachmentFiles=[],systemTimer=null,ownerOrganizations=[];
+let token=null,me=null,cases=[],users=[],current=null,settings=null,attachmentFiles=[],systemTimer=null,ownerOrganizations=[],passwordResetToken=new URLSearchParams(location.search).get("reset")||"";
 const $=id=>document.getElementById(id);
 function toast(message,type=""){
  const stack=$("toastStack");
@@ -101,7 +101,12 @@ document.addEventListener("keydown",e=>{
  if(e.key==="Escape"){$("newModal")?.classList.add("hidden")}
 });
 function pill(s){let c=s==="Ingepland"||s==="Afgerond"?"good":s==="Info ontbreekt"?"warn":s==="Review"?"review":"";return `<span class="pill ${c}">${escapeReport(s)}</span>`}
-async function loginNow(){try{let d=await api("/api/login",{method:"POST",body:JSON.stringify({email:email.value,password:password.value})});me=d.user;await boot()}catch(e){loginMsg.textContent=e.message}}
+function setAuthPanel(id){["loginPanel","forgotPanel","resetPanel"].forEach(x=>$(x)?.classList.toggle("hidden",x!==id))}
+function showForgotPassword(){if($("forgotEmail"))$("forgotEmail").value=$("email")?.value||"";if($("forgotMsg"))$("forgotMsg").textContent="";setAuthPanel("forgotPanel")}
+function showLoginPanel(clearReset=false){if(clearReset){passwordResetToken="";history.replaceState({},"",location.pathname)};if($("loginMsg"))$("loginMsg").textContent="";setAuthPanel("loginPanel")}
+async function requestPasswordReset(){let addr=$("forgotEmail")?.value.trim()||"";if(!addr)return $("forgotMsg").textContent="Vul je e-mailadres in.";try{let r=await api("/api/forgot-password",{method:"POST",body:JSON.stringify({email:addr})});$("forgotMsg").textContent=r.message||"Controleer je e-mail."}catch(e){$("forgotMsg").textContent=e.message}}
+async function completePasswordReset(){let a=$("resetPassword")?.value||"",b=$("resetPassword2")?.value||"";if(a.length<12)return $("resetMsg").textContent="Gebruik minimaal 12 tekens.";if(a!==b)return $("resetMsg").textContent="De wachtwoorden zijn niet gelijk.";try{await api("/api/reset-password",{method:"POST",body:JSON.stringify({token:passwordResetToken,new_password:a})});passwordResetToken="";history.replaceState({},"",location.pathname);$("email").value="";$("password").value="";setAuthPanel("loginPanel");$("loginMsg").textContent="Wachtwoord gewijzigd. Je kunt nu inloggen."}catch(e){$("resetMsg").textContent=e.message}}
+async function loginNow(){try{loginMsg.textContent="";let d=await api("/api/login",{method:"POST",body:JSON.stringify({email:email.value,password:password.value})});me=d.user;await boot()}catch(e){loginMsg.textContent=e.message}}
 async function boot(){try{
  me=await api("/api/me");login.classList.add("hidden");app.classList.remove("hidden");
  who.textContent=`${me.display_name} · ${me.is_platform_owner?"eigenaar · ":""}${me.role} · ${me.organization_name||""}`;
@@ -164,6 +169,10 @@ async function loadSystemStatus(silent=false){
   sysLastGood.textContent=fmtDateTime(s.monitoring?.last_successful_check);
   sysStarted.textContent=fmtDateTime(s.app?.started_at);
   sysHosting.textContent=`${s.hosting?.provider||"Render"} · ${s.organization?.name||me.organization_name||""}`;
+  let mailStatus=s.mail?.status||"not_configured",mailWorked=!!s.mail?.last_success;
+  sysMail.textContent=mailStatus==="ready"?(mailWorked?"Actief":"Geconfigureerd"):mailStatus==="disabled"?"Uitgeschakeld":"Nog instellen";
+  sysMail.className=mailStatus==="ready"?"good":mailStatus==="disabled"?"":"warn";
+  sysMailLast.textContent=s.mail?.last_success?fmtDateTime(s.mail.last_success):(s.mail?.last_error?`Fout · ${fmtDateTime(s.mail.last_error.at)}`:"Nog geen succesvolle verzending");
 
   let e=s.monitoring?.last_error;
   if(e){
@@ -583,17 +592,19 @@ function showPilotFinal(r){
  show("report");
 }
 
-function applyBranding(s){if(!s)return;document.documentElement.style.setProperty('--accent',s.brand_accent||'#62d0ff');document.title=(s.brand_name||'Werkstuur')+' · Pilot';let brand=document.querySelector('.brand');if(brand&&s.brand_name)brand.childNodes[0].nodeValue=s.brand_name}
+function applyBranding(s){if(!s)return;document.documentElement.style.setProperty('--accent',s.brand_accent||'#62d0ff');document.title=(s.brand_name||'Werkstuur')+' · Service operations';let brand=document.querySelector('.brand');if(brand&&s.brand_name)brand.childNodes[0].nodeValue=s.brand_name}
 async function loadProductManagement(){let v=await api('/api/version');versionBadge.textContent=`${v.name} ${v.version}`;let s=await api('/api/settings');settings=s;applyBranding(s);pbBrandName.value=s.brand_name||'Werkstuur';pbAccent.value=s.brand_accent||'#62d0ff';pbSupportEmail.value=s.support_email||'';pbPrivacyUrl.value=s.privacy_url||'';pbPortalTitle.value=s.customer_portal_title||'Service-intake';accountAdminCard.style.display=me.role==='admin'?'':'none';if(me.role==='admin')await loadAccounts()}
 async function saveBranding(){let s=await api('/api/settings',{method:'PATCH',body:JSON.stringify({brand_name:pbBrandName.value.trim()||'Werkstuur',brand_accent:pbAccent.value.trim(),support_email:pbSupportEmail.value.trim(),privacy_url:pbPrivacyUrl.value.trim(),customer_portal_title:pbPortalTitle.value.trim()||'Service-intake'})});settings={...(settings||{}),...s};applyBranding(settings);toast('Branding opgeslagen.','good')}
-async function changeOwnPassword(){if(!pwCurrent.value||!pwNew.value)return alert('Vul huidig en nieuw wachtwoord in.');await api('/api/change-password',{method:'POST',body:JSON.stringify({current_password:pwCurrent.value,new_password:pwNew.value})});pwCurrent.value='';pwNew.value='';alert('Wachtwoord gewijzigd.')}
-async function loadAccounts(){let rows=await api('/api/accounts');accountList.innerHTML=`<div class="row head"><div>Naam</div><div>E-mail</div><div>Rol</div><div>Status</div><div>Actie</div></div>`+rows.map(u=>`<div class="row"><div>${escapeReport(u.display_name)}</div><div>${escapeReport(u.email)}</div><div>${u.role}</div><div>${u.active?'Actief':'Uit'}</div><div>${u.id===me.id?'Eigen account':`<button class="btn" onclick="toggleAccount(${u.id},${u.active?0:1})">${u.active?'Deactiveer':'Activeer'}</button> <button class="btn" onclick="adminResetPassword(${u.id})">Reset ww</button>`}</div></div>`).join('')}
+async function changeOwnPassword(){if(!pwCurrent.value||!pwNew.value)return alert('Vul huidig en nieuw wachtwoord in.');await api('/api/change-password',{method:'POST',body:JSON.stringify({current_password:pwCurrent.value,new_password:pwNew.value})});pwCurrent.value='';pwNew.value='';alert('Wachtwoord gewijzigd. Log opnieuw in om verder te gaan.');location.reload()}
+async function loadAccounts(){let rows=await api('/api/accounts');accountList.innerHTML=`<div class="row head"><div>Naam</div><div>E-mail</div><div>Rol</div><div>Status</div><div>Actie</div></div>`+rows.map(u=>`<div class="row"><div>${escapeReport(u.display_name)}</div><div>${escapeReport(u.email)}</div><div>${u.role}</div><div>${u.active?'Actief':'Uit'}</div><div>${u.id===me.id?'Eigen account':`<button class="btn" onclick="toggleAccount(${u.id},${u.active?0:1})">${u.active?'Deactiveer':'Activeer'}</button> <button class="btn" onclick="sendResetLink(${u.id})">Resetlink</button> <button class="btn" onclick="adminResetPassword(${u.id})">Tijdelijk ww</button>`}</div></div>`).join('')}
 async function createAccount(){let r=await api('/api/accounts',{method:'POST',body:JSON.stringify({display_name:accName.value.trim(),email:accEmail.value.trim(),role:accRole.value,password:accPassword.value})});accName.value='';accEmail.value='';accPassword.value='';await loadAccounts();toast(r.created?'Account aangemaakt.':'Account bestond al.',r.created?'good':'')}
 async function toggleAccount(id,active){await api(`/api/accounts/${id}`,{method:'PATCH',body:JSON.stringify({active:!!active})});await loadAccounts()}
+async function sendResetLink(id){try{await api(`/api/accounts/${id}/send-reset-link`,{method:'POST',body:'{}'});toast('Herstel-link verstuurd.','good')}catch(e){toast(e.message||'Herstel-link kon niet worden verstuurd.','warn')}}
+async function sendTestEmail(){try{await api('/api/test-email',{method:'POST',body:'{}'});toast('Testmail verstuurd naar je account.','good');await loadSystemStatus(true)}catch(e){toast(e.message||'Testmail mislukt.','warn');await loadSystemStatus(true)}}
 async function adminResetPassword(id){let pwd=prompt('Nieuw tijdelijk wachtwoord (min. 12 tekens):');if(!pwd)return;await api(`/api/accounts/${id}/reset-password`,{method:'POST',body:JSON.stringify({new_password:pwd})});toast('Wachtwoord gereset.','good')}
 async function downloadOperationalExport(){let d=await api('/api/export');let blob=new Blob([JSON.stringify(d,null,2)],{type:'application/json'});let url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=`werkstuur-export-${new Date().toISOString().slice(0,10)}.json`;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000)}
 async function resetPilotData(){if(resetConfirm.value!=='RESET PILOT DATA')return alert('Bevestigingstekst is niet exact correct.');let summary=await api('/api/pilot-reset-summary');if(!confirm(`Dit verwijdert ${summary.cases} cases, ${summary.notes} notities, ${summary.attachments} bijlagen en ${summary.pilots} pilot(s). Doorgaan?`))return;await api('/api/pilot-reset',{method:'POST',body:JSON.stringify({confirm:'RESET PILOT DATA'})});alert('Pilotdata verwijderd.');resetConfirm.value='';await loadCases();render();let ob=await api('/api/onboarding-status');initOnboarding(ob);show('onboarding')}
 
 async function loadAudit(){if(me.role==="technician")return;let a=await api("/api/audit");auditList.innerHTML=a.map(x=>`<div class="row"><div>${escapeReport(new Date(x.created_at).toLocaleString("nl-NL"))}</div><div>${escapeReport(x.display_name||"Klant")}</div><div>${escapeReport(x.action)}</div><div>${escapeReport(x.detail||"")}</div><div></div></div>`).join("")}
 function copyIntakeLink(){navigator.clipboard?.writeText(intakeLink.textContent);toast("Intakelink gekopieerd.","good")}
-boot();
+if(passwordResetToken){setAuthPanel("resetPanel");login.classList.remove("hidden");app.classList.add("hidden")}else{boot()}
