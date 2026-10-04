@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Project Preflight Cloud v1
+Werkstuur Cloud v1
 Stateless Python web/API service backed by Supabase Postgres + private Storage.
 
 The Supabase secret key is SERVER-ONLY. It must never be added to static files.
@@ -33,14 +33,128 @@ import server as core
 ROOT = Path(__file__).resolve().parent
 STATIC = (ROOT / "static") if (ROOT / "static").is_dir() else ROOT
 
-APP_NAME = "Project Preflight"
-APP_VERSION = "1.0.5-cloud-pilot"
+APP_NAME = "Werkstuur"
+APP_VERSION = "1.1.1-brand-complete"
 APP_BUILD = "2026-10-03"
 BUCKET = os.environ.get("SUPABASE_STORAGE_BUCKET", "preflight-attachments")
 MAX_BODY = 7 * 1024 * 1024
 SESSION_HOURS = int(os.environ.get("SESSION_HOURS", "12"))
 COOKIE_SECURE = os.environ.get("COOKIE_SECURE", "1") not in ("0","false","False")
 PORT = int(os.environ.get("PORT", "10000"))
+
+_PROCESS_STARTED_AT = time.time()
+_PROCESS_STARTED_ISO = now_marker = datetime.now(timezone.utc).isoformat()
+_STATUS_LOCK = threading.Lock()
+_LAST_SERVER_ERROR = None
+_LAST_SUCCESSFUL_STATUS_CHECK = None
+
+def _sanitize_error_message(exc):
+    msg = f"{type(exc).__name__}: {str(exc)}"
+    msg = re.sub(r"sb_secret_[A-Za-z0-9._-]+", "[REDACTED]", msg)
+    msg = re.sub(r"([?&]token=)[^&\s]+", r"\1[REDACTED]", msg)
+    return msg[:240]
+
+def _record_server_error(scope, exc):
+    global _LAST_SERVER_ERROR
+    with _STATUS_LOCK:
+        _LAST_SERVER_ERROR = {
+            "at": datetime.now(timezone.utc).isoformat(),
+            "scope": str(scope)[:80],
+            "message": _sanitize_error_message(exc),
+        }
+
+def _record_status_success():
+    global _LAST_SUCCESSFUL_STATUS_CHECK
+    with _STATUS_LOCK:
+        _LAST_SUCCESSFUL_STATUS_CHECK = datetime.now(timezone.utc).isoformat()
+
+def _count_rows(table, filters=None):
+    q = sb.table(table).select("id", count="exact").limit(1)
+    for op, column, value in (filters or []):
+        q = getattr(q, op)(column, value)
+    r = q.execute()
+    count = getattr(r, "count", None)
+    if count is None:
+        return len(resp_data(r))
+    return int(count)
+
+def system_status_payload(user=None):
+    checked_at = datetime.now(timezone.utc).isoformat()
+    db_started = time.perf_counter()
+    database = {"status": "online", "latency_ms": None}
+    storage = {"status": "online", "bucket": BUCKET}
+    counts = {}
+    current_error = None
+
+    try:
+        sb.table("settings").select("key").limit(1).execute()
+        database["latency_ms"] = round((time.perf_counter() - db_started) * 1000, 1)
+
+        org_id=current_org_id()
+        filters=[("eq","organization_id",org_id)] if org_id else []
+        counts = {
+            "cases": _count_rows("cases",filters),
+            "active_users": _count_rows("users",filters+[("eq","active",True)]),
+            "active_sessions": _count_rows("sessions",[("eq","active_organization_id",org_id),("gt","expires_at",checked_at)]) if org_id else 0,
+            "attachments": _count_rows("attachments",filters),
+            "pilots": _count_rows("pilots",filters),
+        }
+        if user and user.get("is_platform_owner"):
+            counts["organizations"]=_count_rows("organizations")
+    except Exception as exc:
+        database = {"status": "unavailable", "latency_ms": None}
+        current_error = exc
+        _reset_supabase_client()
+
+    storage_started = time.perf_counter()
+    if database["status"] == "online":
+        try:
+            sb.storage.from_(BUCKET).list(f"org/{current_org_id()}" if current_org_id() else "", {"limit": 1, "offset": 0})
+            storage["latency_ms"] = round((time.perf_counter() - storage_started) * 1000, 1)
+        except Exception as exc:
+            storage = {"status": "unavailable", "bucket": BUCKET, "latency_ms": None}
+            current_error = current_error or exc
+            _reset_supabase_client()
+    else:
+        storage = {"status": "unknown", "bucket": BUCKET, "latency_ms": None}
+
+    overall = "healthy" if database["status"] == "online" and storage["status"] == "online" else "degraded"
+    if current_error:
+        _record_server_error("system_status", current_error)
+    else:
+        _record_status_success()
+
+    with _STATUS_LOCK:
+        last_error = dict(_LAST_SERVER_ERROR) if _LAST_SERVER_ERROR else None
+        last_success = _LAST_SUCCESSFUL_STATUS_CHECK
+
+    uptime_seconds = max(0, int(time.time() - _PROCESS_STARTED_AT))
+    return {
+        "overall": overall,
+        "checked_at": checked_at,
+        "app": {
+            "status": "online",
+            "name": APP_NAME,
+            "version": APP_VERSION,
+            "build": APP_BUILD,
+            "uptime_seconds": uptime_seconds,
+            "started_at": _PROCESS_STARTED_ISO,
+        },
+        "database": database,
+        "storage": storage,
+        "counts": counts,
+        "hosting": {
+            "provider": "Render",
+            "service_id": os.environ.get("RENDER_SERVICE_ID", ""),
+            "commit": (os.environ.get("RENDER_GIT_COMMIT", "") or "")[:12],
+            "external_url": os.environ.get("RENDER_EXTERNAL_URL", ""),
+        },
+        "organization": current_organization(),
+        "monitoring": {
+            "last_successful_check": last_success,
+            "last_error": last_error,
+        },
+    }
 
 # Lightweight, process-local abuse protection for the single-instance pilot.
 # Keys are salted hashes of client IP + scope; raw IPs are not retained.
@@ -98,6 +212,45 @@ class _SupabaseProxy:
 
 sb = _SupabaseProxy()
 
+_org_local = threading.local()
+
+def _set_org_context(org_id):
+    _org_local.organization_id = int(org_id) if org_id not in (None, "") else None
+
+def current_org_id(required=False):
+    org_id = getattr(_org_local, "organization_id", None)
+    if required and not org_id:
+        raise RuntimeError("organization context ontbreekt")
+    return org_id
+
+def organization_by_id(org_id):
+    if not org_id:
+        return None
+    return first(sb.table("organizations").select("*").eq("id", int(org_id)).limit(1).execute())
+
+def current_organization():
+    return organization_by_id(current_org_id())
+
+def resolve_public_organization(token):
+    token = str(token or "")
+    if not token:
+        return None
+    row = first(
+        sb.table("organization_settings")
+        .select("organization_id")
+        .eq("key", "intake_token")
+        .eq("value", token)
+        .limit(1)
+        .execute()
+    )
+    if not row:
+        return None
+    org = organization_by_id(row["organization_id"])
+    if not org or org.get("status") in ("suspended", "archived"):
+        return None
+    _set_org_context(org["id"])
+    return org
+
 def now_iso():
     return datetime.now(timezone.utc).isoformat()
 
@@ -111,11 +264,31 @@ def first(resp):
     data = resp_data(resp)
     return data[0] if data else None
 
-def get_setting(key, default=None):
+def get_setting(key, default=None, organization_id=None):
+    org_id = organization_id if organization_id is not None else current_org_id()
+    if org_id:
+        row = first(
+            sb.table("organization_settings")
+            .select("value")
+            .eq("organization_id", int(org_id))
+            .eq("key", key)
+            .limit(1)
+            .execute()
+        )
+        if row:
+            return row["value"]
     row = first(sb.table("settings").select("value").eq("key", key).limit(1).execute())
     return row["value"] if row else default
 
-def set_setting(key, value):
+def set_setting(key, value, organization_id=None):
+    org_id = organization_id if organization_id is not None else current_org_id()
+    if org_id:
+        sb.table("organization_settings").upsert({
+            "organization_id": int(org_id),
+            "key": key,
+            "value": str(value)
+        }, on_conflict="organization_id,key").execute()
+        return
     sb.table("settings").upsert({"key": key, "value": str(value)}, on_conflict="key").execute()
 
 def setting_json(key, default):
@@ -146,7 +319,9 @@ def economic_assumptions():
     }
 
 def create_audit(case_id, user_id, action, detail=""):
+    org_id = current_org_id(required=True)
     sb.table("audit").insert({
+        "organization_id": org_id,
         "case_id": case_id,
         "user_id": user_id,
         "action": action,
@@ -158,7 +333,7 @@ def bootstrap():
     # Insert required default settings.
     defaults = {
         "intake_token": secrets.token_urlsafe(24),
-        "company_name": "Project Preflight Pilot",
+        "company_name": "Werkstuur Pilot",
         "onboarding_complete": "0",
         "enabled_service_types": json.dumps(["Laadpaal","Zonnepanelen","Thuisbatterij","Elektro"], ensure_ascii=False),
         "enabled_brands": json.dumps({
@@ -175,7 +350,7 @@ def bootstrap():
         "cost_per_km":"0.35",
         "software_monthly_cost":"299",
         "monthly_case_volume":"150",
-        "brand_name":"Project Preflight",
+        "brand_name":"Werkstuur",
         "brand_accent":"#62d0ff",
         "support_email":"",
         "privacy_url":"",
@@ -185,6 +360,20 @@ def bootstrap():
     missing = [{"key":k,"value":v} for k,v in defaults.items() if k not in existing]
     if missing:
         sb.table("settings").insert(missing).execute()
+
+    internal = first(sb.table("organizations").select("*").eq("slug","werkstuur-internal").limit(1).execute())
+    if not internal:
+        internal = first(sb.table("organizations").insert({
+            "name":"Werkstuur Internal","slug":"werkstuur-internal","status":"active","plan":"internal",
+            "created_at":now_iso(),"updated_at":now_iso()
+        }).execute())
+    org_id = internal["id"]
+    org_settings = {r["key"] for r in resp_data(
+        sb.table("organization_settings").select("key").eq("organization_id",org_id).execute()
+    )}
+    org_missing = [{"organization_id":org_id,"key":k,"value":v} for k,v in defaults.items() if k not in org_settings]
+    if org_missing:
+        sb.table("organization_settings").insert(org_missing).execute()
 
     # First administrator is created only when user table is empty and env vars exist.
     users = resp_data(sb.table("users").select("id").limit(1).execute())
@@ -199,6 +388,8 @@ def bootstrap():
                 "email":email,
                 "display_name":name,
                 "role":"admin",
+                "organization_id":org_id,
+                "is_platform_owner":True,
                 "password_hash":core.hash_password(password),
                 "active":True,
                 "created_at":now_iso()
@@ -211,14 +402,16 @@ def find_user_by_email(email):
     return first(sb.table("users").select("*").eq("email", email.lower().strip()).limit(1).execute())
 
 def find_user(uid):
-    return first(sb.table("users").select("id,email,display_name,role,active,created_at").eq("id", uid).limit(1).execute())
+    return first(sb.table("users").select("id,email,display_name,role,active,created_at,organization_id,is_platform_owner").eq("id", uid).limit(1).execute())
 
 def create_session(user_id):
     token = secrets.token_urlsafe(40)
     expires = datetime.now(timezone.utc) + timedelta(hours=SESSION_HOURS)
+    u = find_user(user_id)
     sb.table("sessions").insert({
         "token_hash": sha_token(token),
         "user_id": user_id,
+        "active_organization_id": u.get("organization_id") if u else None,
         "expires_at": expires.isoformat(),
         "created_at": now_iso()
     }).execute()
@@ -231,7 +424,12 @@ def delete_session(token):
 def user_from_token(token):
     if not token:
         return None
-    row = first(sb.table("sessions").select("user_id,expires_at").eq("token_hash", sha_token(token)).limit(1).execute())
+    row = first(
+        sb.table("sessions")
+        .select("user_id,expires_at,active_organization_id")
+        .eq("token_hash", sha_token(token))
+        .limit(1).execute()
+    )
     if not row:
         return None
     try:
@@ -244,14 +442,31 @@ def user_from_token(token):
     u = find_user(row["user_id"])
     if not u or not u.get("active"):
         return None
+
+    base_org_id = u.get("organization_id")
+    effective_org_id = row.get("active_organization_id") if u.get("is_platform_owner") else base_org_id
+    effective_org_id = effective_org_id or base_org_id
+    org = organization_by_id(effective_org_id)
+    if not org:
+        return None
+    if not u.get("is_platform_owner") and org.get("status") in ("suspended","archived"):
+        return None
+
+    u["base_organization_id"] = base_org_id
+    u["organization_id"] = effective_org_id
+    u["organization_name"] = org.get("name")
+    u["organization_slug"] = org.get("slug")
+    u["organization_status"] = org.get("status")
+    u["organization_plan"] = org.get("plan")
+    _set_org_context(effective_org_id)
     return u
 
 def public_config():
     return {
-        "company": get_setting("company_name","Project Preflight Pilot"),
+        "company": get_setting("company_name","Werkstuur Pilot"),
         "enabled_service_types": setting_json("enabled_service_types",["Laadpaal","Zonnepanelen","Thuisbatterij","Elektro"]),
         "enabled_brands": setting_json("enabled_brands",{}),
-        "brand_name": get_setting("brand_name","Project Preflight"),
+        "brand_name": get_setting("brand_name","Werkstuur"),
         "brand_accent": get_setting("brand_accent","#62d0ff"),
         "support_email": get_setting("support_email",""),
         "privacy_url": get_setting("privacy_url",""),
@@ -261,12 +476,12 @@ def public_config():
 def onboarding_payload():
     return {
         "complete": get_setting("onboarding_complete","0") == "1",
-        "company_name": get_setting("company_name","Project Preflight Pilot"),
+        "company_name": get_setting("company_name","Werkstuur Pilot"),
         "enabled_service_types": setting_json("enabled_service_types",["Laadpaal","Zonnepanelen","Thuisbatterij","Elektro"]),
         "enabled_brands": setting_json("enabled_brands",{}),
         "assumptions": economic_assumptions(),
         "branding":{
-            "brand_name":get_setting("brand_name","Project Preflight"),
+            "brand_name":get_setting("brand_name","Werkstuur"),
             "brand_accent":get_setting("brand_accent","#62d0ff"),
             "support_email":get_setting("support_email",""),
             "privacy_url":get_setting("privacy_url",""),
@@ -281,7 +496,7 @@ def safe_filename(name):
     return name or "attachment"
 
 def get_case(cid):
-    return first(sb.table("cases").select("*").eq("id", cid).limit(1).execute())
+    return first(sb.table("cases").select("*").eq("organization_id",current_org_id(required=True)).eq("id", cid).limit(1).execute())
 
 def can_access_case(user, case):
     if not case:
@@ -291,7 +506,7 @@ def can_access_case(user, case):
     return case.get("assigned_to") == user["id"]
 
 def visible_cases(user):
-    q = sb.table("cases").select("*").order("updated_at", desc=True)
+    q = sb.table("cases").select("*").eq("organization_id",current_org_id(required=True)).order("updated_at", desc=True)
     if user["role"] == "technician":
         q = q.eq("assigned_to", user["id"])
     rows = resp_data(q.execute())
@@ -306,7 +521,7 @@ def enrich_case(c):
     return c
 
 def calculate_metrics():
-    cases = resp_data(sb.table("cases").select("*").execute())
+    cases = resp_data(sb.table("cases").select("*").eq("organization_id",current_org_id(required=True)).execute())
     outcomes = [c for c in cases if c.get("outcome_recorded_at")]
     total=len(cases)
     customer_intakes=sum(1 for c in cases if c.get("source")=="customer")
@@ -334,7 +549,7 @@ def calculate_metrics():
     }
 
 def calculate_economics(cases=None):
-    cases = cases if cases is not None else resp_data(sb.table("cases").select("*").execute())
+    cases = cases if cases is not None else resp_data(sb.table("cases").select("*").eq("organization_id",current_org_id(required=True)).execute())
     outcomes=[c for c in cases if c.get("outcome_recorded_at")]
     a=economic_assumptions()
     measured=[float(c["outcome_planner_minutes"]) for c in outcomes if c.get("outcome_planner_minutes") is not None]
@@ -382,7 +597,7 @@ def calculate_economics(cases=None):
     }
 
 def active_pilot():
-    return first(sb.table("pilots").select("*").eq("active",True).order("id",desc=True).limit(1).execute())
+    return first(sb.table("pilots").select("*").eq("organization_id",current_org_id(required=True)).eq("active",True).order("id",desc=True).limit(1).execute())
 
 def pilot_progress():
     p=active_pilot()
@@ -392,7 +607,7 @@ def pilot_progress():
     start=date.fromisoformat(p["start_date"]); end=date.fromisoformat(p["end_date"]); today=date.today()
     total=max(1,(end-start).days+1); elapsed=max(0,min(total,(today-start).days+1))
     avg_plan=None
-    outcome_cases=[c for c in resp_data(sb.table("cases").select("outcome_planner_minutes,outcome_recorded_at").execute()) if c.get("outcome_recorded_at") and c.get("outcome_planner_minutes") is not None]
+    outcome_cases=[c for c in resp_data(sb.table("cases").select("outcome_planner_minutes,outcome_recorded_at").eq("organization_id",current_org_id(required=True)).execute()) if c.get("outcome_recorded_at") and c.get("outcome_planner_minutes") is not None]
     if outcome_cases:
         avg_plan=round(sum(float(c["outcome_planner_minutes"]) for c in outcome_cases)/len(outcome_cases),2)
     current={
@@ -429,7 +644,7 @@ def pilot_progress():
 
 def management_report():
     m=calculate_metrics()
-    cases=[c for c in resp_data(sb.table("cases").select("*").execute()) if c.get("outcome_recorded_at")]
+    cases=[c for c in resp_data(sb.table("cases").select("*").eq("organization_id",current_org_id(required=True)).execute()) if c.get("outcome_recorded_at")]
     info=Counter(); mat=Counter(); faults=Counter(); routes=Counter()
     for c in cases:
         for x in re.split(r"[;,]", c.get("outcome_missing_info") or ""):
@@ -448,7 +663,7 @@ def management_report():
         decision={"status":"negatief_signaal","label":"Nog geen positief financieel pilotsignaal","reason":f"Geprojecteerde netto maandwaarde €{net:.0f}.","criterion":"Nog niet positief wanneer projectie na softwarekosten ≤ 0 is."}
     rec=[]
     if info:
-        x,cnt=info.most_common(1)[0]; rec.append(f"Maak '{x}' een expliciet preflight-veld; {cnt} keer als ontbrekend geregistreerd.")
+        x,cnt=info.most_common(1)[0]; rec.append(f"Maak '{x}' een expliciet voorcheckveld; {cnt} keer als ontbrekend geregistreerd.")
     if m["preventable_second_visit_pct"]>=30 and m["outcomes"]:
         rec.append("Prioriteer het terugdringen van voorkombare tweede bezoeken.")
     if m["remote_resolved_pct"]>0:rec.append("Borg remote-first triage voor routes die aantoonbaar remote oplosbaar zijn.")
@@ -478,16 +693,18 @@ def management_report():
     }
 
 def export_payload():
+    org_id=current_org_id(required=True)
     return {
-        "meta":{"app_name":APP_NAME,"app_version":APP_VERSION,"exported_at":now_iso(),"contains_passwords":False,"contains_attachment_bytes":False},
-        "settings":resp_data(sb.table("settings").select("*").execute()),
-        "users":resp_data(sb.table("users").select("id,email,display_name,role,active,created_at").execute()),
-        "pilots":resp_data(sb.table("pilots").select("*").execute()),
-        "pilot_snapshots":resp_data(sb.table("pilot_snapshots").select("*").execute()),
-        "cases":resp_data(sb.table("cases").select("*").execute()),
-        "notes":resp_data(sb.table("notes").select("*").execute()),
-        "attachments":resp_data(sb.table("attachments").select("id,case_id,filename,storage_path,content_type,size_bytes,created_by,created_at").execute()),
-        "audit":resp_data(sb.table("audit").select("*").execute()),
+        "meta":{"app_name":APP_NAME,"app_version":APP_VERSION,"exported_at":now_iso(),"contains_passwords":False,"contains_attachment_bytes":False,"organization_id":org_id},
+        "organization":organization_by_id(org_id),
+        "settings":resp_data(sb.table("organization_settings").select("key,value").eq("organization_id",org_id).execute()),
+        "users":resp_data(sb.table("users").select("id,email,display_name,role,active,created_at").eq("organization_id",org_id).execute()),
+        "pilots":resp_data(sb.table("pilots").select("*").eq("organization_id",org_id).execute()),
+        "pilot_snapshots":resp_data(sb.table("pilot_snapshots").select("*").eq("organization_id",org_id).execute()),
+        "cases":resp_data(sb.table("cases").select("*").eq("organization_id",org_id).execute()),
+        "notes":resp_data(sb.table("notes").select("*").eq("organization_id",org_id).execute()),
+        "attachments":resp_data(sb.table("attachments").select("id,case_id,filename,storage_path,content_type,size_bytes,created_by,created_at").eq("organization_id",org_id).execute()),
+        "audit":resp_data(sb.table("audit").select("*").eq("organization_id",org_id).execute()),
     }
 
 def create_team_user(email,name,role,password):
@@ -499,13 +716,99 @@ def create_team_user(email,name,role,password):
     existing=find_user_by_email(email)
     if existing:return existing,False
     row=first(sb.table("users").insert({
-        "email":email,"display_name":name,"role":role,
+        "email":email,"display_name":name,"role":role,"organization_id":current_org_id(required=True),"is_platform_owner":False,
         "password_hash":core.hash_password(password),"active":True,"created_at":now_iso()
     }).execute())
     return row,True
 
+
+def _slugify(value):
+    slug=re.sub(r"[^a-z0-9]+","-",str(value or "").lower()).strip("-")
+    return slug[:60] or "organisatie"
+
+def initialize_organization_settings(org_id, name, support_email="", privacy_url=""):
+    global_defaults = resp_data(sb.table("settings").select("key,value").execute())
+    rows=[]
+    for item in global_defaults:
+        value=item["value"]
+        if item["key"]=="company_name": value=name
+        elif item["key"]=="onboarding_complete": value="0"
+        elif item["key"]=="intake_token": value=secrets.token_urlsafe(24)
+        elif item["key"]=="brand_name": value="Werkstuur"
+        elif item["key"]=="support_email": value=support_email or ""
+        elif item["key"]=="privacy_url": value=privacy_url or ""
+        rows.append({"organization_id":org_id,"key":item["key"],"value":str(value)})
+    if rows:
+        sb.table("organization_settings").upsert(rows,on_conflict="organization_id,key").execute()
+
+def owner_organizations_payload():
+    orgs=resp_data(sb.table("organizations").select("*").order("created_at").execute())
+    result=[]
+    for org in orgs:
+        oid=org["id"]
+        users_count=len(resp_data(sb.table("users").select("id").eq("organization_id",oid).eq("active",True).execute()))
+        cases_rows=resp_data(sb.table("cases").select("id,created_at").eq("organization_id",oid).order("created_at",desc=True).limit(1).execute())
+        cases_count=_count_rows("cases",[("eq","organization_id",oid)])
+        active_pilots=_count_rows("pilots",[("eq","organization_id",oid),("eq","active",True)])
+        onboarding=get_setting("onboarding_complete","0",organization_id=oid)=="1"
+        result.append({
+            **org,
+            "active_users":users_count,
+            "cases":cases_count,
+            "active_pilot":active_pilots>0,
+            "onboarding_complete":onboarding,
+            "last_activity":cases_rows[0]["created_at"] if cases_rows else None,
+        })
+    return result
+
+def create_organization(body):
+    name=str(body.get("name") or "").strip()
+    if not name:
+        raise ValueError("organisatienaam verplicht")
+    slug=_slugify(body.get("slug") or name)
+    if first(sb.table("organizations").select("id").eq("slug",slug).limit(1).execute()):
+        raise ValueError("slug bestaat al")
+    status=str(body.get("status") or "onboarding")
+    plan=str(body.get("plan") or "pilot")
+    if status not in ("onboarding","pilot","active","suspended","archived"):
+        raise ValueError("ongeldige status")
+    if plan not in ("internal","pilot","starter","growth","enterprise"):
+        raise ValueError("ongeldig plan")
+    support=str(body.get("support_email") or "").strip()
+    privacy=str(body.get("privacy_url") or "").strip()
+    if support and "@" not in support:
+        raise ValueError("ongeldig support e-mailadres")
+    if privacy and not re.match(r"^https?://",privacy,re.I):
+        raise ValueError("ongeldige privacy-URL")
+    org=first(sb.table("organizations").insert({
+        "name":name,"slug":slug,"status":status,"plan":plan,
+        "support_email":support or None,"privacy_url":privacy or None,
+        "created_at":now_iso(),"updated_at":now_iso()
+    }).execute())
+    initialize_organization_settings(org["id"],name,support,privacy)
+
+    admin_email=str(body.get("admin_email") or "").lower().strip()
+    admin_name=str(body.get("admin_name") or "").strip()
+    admin_password=str(body.get("admin_password") or "")
+    if admin_email or admin_name or admin_password:
+        if not admin_email or "@" not in admin_email:
+            raise ValueError("geldig admin e-mailadres verplicht")
+        if not admin_name:
+            raise ValueError("adminnaam verplicht")
+        if len(admin_password)<12:
+            raise ValueError("tijdelijk adminwachtwoord minimaal 12 tekens")
+        if find_user_by_email(admin_email):
+            raise ValueError("e-mailadres bestaat al")
+        sb.table("users").insert({
+            "email":admin_email,"display_name":admin_name,"role":"admin",
+            "organization_id":org["id"],"is_platform_owner":False,
+            "password_hash":core.hash_password(admin_password),"active":True,"created_at":now_iso()
+        }).execute()
+    return org
+
+
 class Handler(BaseHTTPRequestHandler):
-    server_version="ProjectPreflightCloud/1.0"
+    server_version="WerkstuurCloud/1.1"
 
     def log_message(self, fmt, *args):
         message = fmt % args
@@ -547,12 +850,19 @@ class Handler(BaseHTTPRequestHandler):
         return None
 
     def _user(self):
+        _set_org_context(None)
         return user_from_token(self._cookie_token())
 
     def _need(self,roles=None):
         u=self._user()
         if not u:self._json({"error":"unauthorized"},401);return None
         if roles and u["role"] not in roles:self._json({"error":"forbidden"},403);return None
+        return u
+
+    def _need_owner(self):
+        u=self._user()
+        if not u:self._json({"error":"unauthorized"},401);return None
+        if not u.get("is_platform_owner"):self._json({"error":"forbidden"},403);return None
         return u
 
     def _check_origin(self):
@@ -584,6 +894,7 @@ class Handler(BaseHTTPRequestHandler):
         self._security_headers();self.end_headers();self.wfile.write(data)
 
     def do_GET(self):
+        _set_org_context(None)
         try:
             p=urlparse(self.path);path=p.path;q=parse_qs(p.query)
             if path=="/api/health":
@@ -594,10 +905,19 @@ class Handler(BaseHTTPRequestHandler):
                     _reset_supabase_client()
                     return self._json({"ok":False,"name":APP_NAME,"version":APP_VERSION,"backend":"supabase","database":"unavailable"},503)
             if path=="/api/version":return self._json({"name":APP_NAME,"version":APP_VERSION,"build":APP_BUILD})
+            if path=="/api/system-status":
+                u=self._need(("admin",))
+                if not u:return
+                return self._json(system_status_payload(u))
             if path=="/api/public-info":
                 token=q.get("token",[""])[0]
-                if not hmac.compare_digest(token,get_setting("intake_token","")):return self._json({"error":"invalid token"},403)
+                org=resolve_public_organization(token)
+                if not org:return self._json({"error":"invalid token"},403)
                 return self._json(public_config())
+            if path=="/api/owner/organizations":
+                u=self._need_owner()
+                if not u:return
+                return self._json(owner_organizations_payload())
             if path=="/api/me":
                 u=self._need()
                 if u:return self._json(u)
@@ -606,13 +926,14 @@ class Handler(BaseHTTPRequestHandler):
                 u=self._need(("admin","planner"))
                 if u:return self._json(onboarding_payload())
                 return
+
             if path=="/api/settings":
                 u=self._need(("admin","planner"))
                 if not u:return
                 return self._json({
                     "company_name":get_setting("company_name"),
                     "intake_token":get_setting("intake_token"),
-                    "brand_name":get_setting("brand_name","Project Preflight"),
+                    "brand_name":get_setting("brand_name","Werkstuur"),
                     "brand_accent":get_setting("brand_accent","#62d0ff"),
                     "support_email":get_setting("support_email",""),
                     "privacy_url":get_setting("privacy_url",""),
@@ -622,7 +943,7 @@ class Handler(BaseHTTPRequestHandler):
             if path in ("/api/users","/api/accounts"):
                 u=self._need(("admin","planner") if path=="/api/users" else ("admin",))
                 if not u:return
-                rows=resp_data(sb.table("users").select("id,email,display_name,role,active,created_at").order("role").order("display_name").execute())
+                rows=resp_data(sb.table("users").select("id,email,display_name,role,active,created_at").eq("organization_id",current_org_id(required=True)).order("role").order("display_name").execute())
                 return self._json(rows)
             if path=="/api/cases":
                 u=self._need()
@@ -640,7 +961,7 @@ class Handler(BaseHTTPRequestHandler):
                 u=self._need(("admin","planner"))
                 if not u:return
                 p=active_pilot()
-                rows=resp_data(sb.table("pilot_snapshots").select("*").eq("pilot_id",p["id"]).order("snapshot_date").execute()) if p else []
+                rows=resp_data(sb.table("pilot_snapshots").select("*").eq("organization_id",current_org_id(required=True)).eq("pilot_id",p["id"]).order("snapshot_date").execute()) if p else []
                 return self._json(rows)
             if path=="/api/pilot/final-report":
                 u=self._need(("admin","planner"))
@@ -654,7 +975,7 @@ class Handler(BaseHTTPRequestHandler):
             if path=="/api/audit":
                 u=self._need(("admin","planner"))
                 if not u:return
-                rows=resp_data(sb.table("audit").select("*").order("created_at",desc=True).limit(250).execute())
+                rows=resp_data(sb.table("audit").select("*").eq("organization_id",current_org_id(required=True)).order("created_at",desc=True).limit(250).execute())
                 # enrich user display
                 for r in rows:
                     if r.get("user_id"):
@@ -669,14 +990,14 @@ class Handler(BaseHTTPRequestHandler):
                 if not u:return
                 result={}
                 for table in ("cases","notes","attachments","audit","pilots","pilot_snapshots"):
-                    result[table if table!="audit" else "audit_events"]=len(resp_data(sb.table(table).select("id").execute()))
+                    result[table if table!="audit" else "audit_events"]=len(resp_data(sb.table(table).select("id").eq("organization_id",current_org_id(required=True)).execute()))
                 return self._json(result)
             if path.startswith("/api/cases/") and path.endswith("/notes"):
                 u=self._need()
                 if not u:return
                 cid=int(path.split("/")[3]);c=get_case(cid)
                 if not can_access_case(u,c):return self._json({"error":"not found"},404)
-                rows=resp_data(sb.table("notes").select("*").eq("case_id",cid).order("created_at").execute())
+                rows=resp_data(sb.table("notes").select("*").eq("organization_id",current_org_id(required=True)).eq("case_id",cid).order("created_at").execute())
                 for r in rows:
                     x=find_user(r["created_by"]);r["display_name"]=x["display_name"] if x else "Onbekend";r["email"]=x["email"] if x else ""
                 return self._json(rows)
@@ -685,12 +1006,12 @@ class Handler(BaseHTTPRequestHandler):
                 if not u:return
                 cid=int(path.split("/")[3]);c=get_case(cid)
                 if not can_access_case(u,c):return self._json({"error":"not found"},404)
-                rows=resp_data(sb.table("attachments").select("id,case_id,filename,content_type,size_bytes,created_at").eq("case_id",cid).order("created_at").execute())
+                rows=resp_data(sb.table("attachments").select("id,case_id,filename,content_type,size_bytes,created_at").eq("organization_id",current_org_id(required=True)).eq("case_id",cid).order("created_at").execute())
                 return self._json(rows)
             if path.startswith("/api/attachments/"):
                 u=self._need()
                 if not u:return
-                aid=int(path.split("/")[3]);a=first(sb.table("attachments").select("*").eq("id",aid).limit(1).execute())
+                aid=int(path.split("/")[3]);a=first(sb.table("attachments").select("*").eq("organization_id",current_org_id(required=True)).eq("id",aid).limit(1).execute())
                 if not a:return self._json({"error":"not found"},404)
                 c=get_case(a["case_id"])
                 if not can_access_case(u,c):return self._json({"error":"not found"},404)
@@ -710,10 +1031,12 @@ class Handler(BaseHTTPRequestHandler):
                 time.sleep(0.12 * (2 ** retry_count))
                 print(f"GET RETRY {self._get_retry_count} after transient network error: {e!r}", file=sys.stderr)
                 return self.do_GET()
+            _record_server_error("GET "+str(locals().get("path","unknown")), e)
             print("GET ERROR",repr(e),file=sys.stderr)
             return self._json({"error":"server_error"},500)
 
     def do_POST(self):
+        _set_org_context(None)
         if not self._check_origin():return self._json({"error":"invalid origin"},403)
         try:
             path=urlparse(self.path).path
@@ -726,6 +1049,9 @@ class Handler(BaseHTTPRequestHandler):
                 row=find_user_by_email(email)
                 if not row or not row.get("active") or not core.verify_password(pwd,row["password_hash"]):
                     return self._json({"error":"ongeldige inloggegevens"},401)
+                login_org=organization_by_id(row.get("organization_id"))
+                if not row.get("is_platform_owner") and (not login_org or login_org.get("status") in ("suspended","archived")):
+                    return self._json({"error":"deze organisatie is momenteel gepauzeerd"},403)
                 token=create_session(row["id"])
                 cookie=f"pf_session={token}; HttpOnly; SameSite=Lax; Path=/; Max-Age={SESSION_HOURS*3600}"
                 if COOKIE_SECURE:cookie+="; Secure"
@@ -739,13 +1065,15 @@ class Handler(BaseHTTPRequestHandler):
             if path=="/api/public-intake":
                 if body.get("privacy_acknowledged") is not True:return self._json({"error":"privacy-informatie moet eerst worden bevestigd"},400)
                 token=str(body.get("token",""))
-                if not hmac.compare_digest(token,get_setting("intake_token","")):return self._json({"error":"invalid token"},403)
+                org=resolve_public_organization(token)
+                if not org:return self._json({"error":"invalid token"},403)
+                org_id=org["id"]
                 typ=str(body.get("type","Onbekend"));problem=str(body.get("problem",""));extra=body.get("extra") or {}
                 facts,missing,score,dispatch,prep,fault=core.analyze(typ,problem,extra)
                 brand=core.canonical_brand(extra.get("manufacturer"));src=core.source_for(brand);rk=core.route_knowledge(fault["category"]);fk=core.ftf_knowledge(fault["category"])
-                case_no="PF-"+str(int(time.time()*1000))[-8:]
+                case_no="WS-"+str(int(time.time()*1000))[-8:]
                 row=first(sb.table("cases").insert({
-                    "case_no":case_no,"source":"customer","customer":str(body.get("customer") or "Nieuwe klant"),
+                    "organization_id":org_id,"case_no":case_no,"source":"customer","customer":str(body.get("customer") or "Nieuwe klant"),
                     "city":str(body.get("city") or ""),"phone":str(body.get("phone") or ""),"email":str(body.get("email") or ""),
                     "type":typ,"asset":((brand+" "+str(extra.get("model") or "")).strip() if brand!="Onbekend" else "Nog te identificeren"),
                     "status":"Review" if not missing else "Info ontbreekt","score":score,"problem":problem,
@@ -764,11 +1092,29 @@ class Handler(BaseHTTPRequestHandler):
                 if file and file.get("data_base64"):
                     raw=base64.b64decode(file["data_base64"],validate=True)
                     if len(raw)<=5*1024*1024:
-                        name=safe_filename(file.get("name"));storage_path=f"{row['id']}/{secrets.token_hex(12)}-{name}"
+                        name=safe_filename(file.get("name"));storage_path=f"org/{org_id}/cases/{row['id']}/{secrets.token_hex(12)}-{name}"
                         sb.storage.from_(BUCKET).upload(path=storage_path,file=io.BytesIO(raw),file_options={"content-type":file.get("type") or "application/octet-stream","upsert":"false"})
-                        sb.table("attachments").insert({"case_id":row["id"],"filename":name,"storage_path":storage_path,"content_type":file.get("type") or "application/octet-stream","size_bytes":len(raw),"created_at":now_iso()}).execute()
+                        sb.table("attachments").insert({"organization_id":org_id,"case_id":row["id"],"filename":name,"storage_path":storage_path,"content_type":file.get("type") or "application/octet-stream","size_bytes":len(raw),"created_at":now_iso()}).execute()
                 create_audit(row["id"],None,"public_intake","customer self-service; privacy_notice_acknowledged")
                 return self._json({"ok":True,"case_no":case_no,"score":score,"missing":missing,"route":fault["category"]},201)
+
+
+            if path=="/api/owner/organizations":
+                owner=self._need_owner()
+                if not owner:return
+                try:org=create_organization(body)
+                except ValueError as e:return self._json({"error":str(e)},400)
+                return self._json(org,201)
+            if path=="/api/owner/context":
+                owner=self._need_owner()
+                if not owner:return
+                oid=int(body.get("organization_id") or 0)
+                org=organization_by_id(oid)
+                if not org:return self._json({"error":"organisatie niet gevonden"},404)
+                token=self._cookie_token()
+                sb.table("sessions").update({"active_organization_id":oid}).eq("token_hash",sha_token(token)).execute()
+                _set_org_context(oid)
+                return self._json({"ok":True,"organization":org})
 
             u=self._need()
             if not u:return
@@ -793,7 +1139,7 @@ class Handler(BaseHTTPRequestHandler):
                 if u["role"]!="admin":return self._json({"error":"forbidden"},403)
                 uid=int(path.split("/")[3]);new=str(body.get("new_password") or "")
                 if len(new)<12:return self._json({"error":"nieuw wachtwoord minimaal 12 tekens"},400)
-                sb.table("users").update({"password_hash":core.hash_password(new)}).eq("id",uid).execute()
+                sb.table("users").update({"password_hash":core.hash_password(new)}).eq("organization_id",current_org_id(required=True)).eq("id",uid).execute()
                 sb.table("sessions").delete().eq("user_id",uid).execute()
                 create_audit(None,u["id"],"admin_password_reset",str(uid));return self._json({"ok":True})
             if path=="/api/onboarding":
@@ -820,9 +1166,9 @@ class Handler(BaseHTTPRequestHandler):
                     except ValueError as e:return self._json({"error":"teamlid: "+str(e)},400)
                 pilot=body.get("pilot") or {}
                 if pilot.get("create"):
-                    sb.table("pilots").update({"active":False,"updated_at":now_iso()}).eq("active",True).execute()
+                    sb.table("pilots").update({"active":False,"updated_at":now_iso()}).eq("organization_id",current_org_id(required=True)).eq("active",True).execute()
                     sb.table("pilots").insert({
-                        "name":str(pilot.get("name") or "Launch Partner Pilot"),"start_date":pilot.get("start_date") or date.today().isoformat(),
+                        "organization_id":current_org_id(required=True),"name":str(pilot.get("name") or "Launch Partner Pilot"),"start_date":pilot.get("start_date") or date.today().isoformat(),
                         "end_date":pilot.get("end_date") or (date.today()+timedelta(days=42)).isoformat(),
                         "baseline_planner_minutes":pilot.get("baseline_planner_minutes"),"baseline_first_time_fix_pct":pilot.get("baseline_first_time_fix_pct"),
                         "baseline_second_visit_pct":pilot.get("baseline_second_visit_pct"),"baseline_remote_resolved_pct":pilot.get("baseline_remote_resolved_pct"),
@@ -831,12 +1177,18 @@ class Handler(BaseHTTPRequestHandler):
                         "notes":str(pilot.get("notes") or ""),"active":True,"created_at":now_iso(),"updated_at":now_iso()
                     }).execute()
                 set_setting("onboarding_complete","1")
+                org=current_organization()
+                if org and org.get("status")=="onboarding":
+                    sb.table("organizations").update({
+                        "status":"pilot" if pilot.get("create") else "active",
+                        "updated_at":now_iso()
+                    }).eq("id",org["id"]).execute()
                 return self._json({"ok":True,"onboarding":onboarding_payload(),"team_members_created":created,"intake_path":"/intake.html?token="+get_setting("intake_token")},201)
             if path=="/api/pilot":
                 if u["role"] not in ("admin","planner"):return self._json({"error":"forbidden"},403)
-                sb.table("pilots").update({"active":False,"updated_at":now_iso()}).eq("active",True).execute()
+                sb.table("pilots").update({"active":False,"updated_at":now_iso()}).eq("organization_id",current_org_id(required=True)).eq("active",True).execute()
                 row=first(sb.table("pilots").insert({
-                    "name":str(body.get("name") or "Preflight Pilot"),"start_date":body.get("start_date") or date.today().isoformat(),
+                    "organization_id":current_org_id(required=True),"name":str(body.get("name") or "Werkstuur Pilot"),"start_date":body.get("start_date") or date.today().isoformat(),
                     "end_date":body.get("end_date") or (date.today()+timedelta(days=42)).isoformat(),
                     "baseline_planner_minutes":body.get("baseline_planner_minutes"),"baseline_first_time_fix_pct":body.get("baseline_first_time_fix_pct"),
                     "baseline_second_visit_pct":body.get("baseline_second_visit_pct"),"baseline_remote_resolved_pct":body.get("baseline_remote_resolved_pct"),
@@ -850,11 +1202,11 @@ class Handler(BaseHTTPRequestHandler):
                 p=active_pilot()
                 if not p:return self._json({"error":"no active pilot"},404)
                 m=calculate_metrics()
-                outcome_cases=[c for c in resp_data(sb.table("cases").select("outcome_planner_minutes,outcome_recorded_at").execute()) if c.get("outcome_recorded_at") and c.get("outcome_planner_minutes") is not None]
+                outcome_cases=[c for c in resp_data(sb.table("cases").select("outcome_planner_minutes,outcome_recorded_at").eq("organization_id",current_org_id(required=True)).execute()) if c.get("outcome_recorded_at") and c.get("outcome_planner_minutes") is not None]
                 avg=round(sum(float(c["outcome_planner_minutes"]) for c in outcome_cases)/len(outcome_cases),2) if outcome_cases else None
                 e=m["economics"]["measured"]
                 row=first(sb.table("pilot_snapshots").upsert({
-                    "pilot_id":p["id"],"snapshot_date":date.today().isoformat(),"outcomes":m["outcomes"],"avg_planner_minutes":avg,
+                    "organization_id":current_org_id(required=True),"pilot_id":p["id"],"snapshot_date":date.today().isoformat(),"outcomes":m["outcomes"],"avg_planner_minutes":avg,
                     "first_time_fix_pct":m["first_time_fix_pct"],"second_visit_pct":m["second_visit_pct"],"remote_resolved_pct":m["remote_resolved_pct"],
                     "preventable_second_visit_pct":m["preventable_second_visit_pct"],"measured_planner_value_eur":e["planner_time_value_eur"],
                     "estimated_remote_value_eur":e["estimated_remote_visit_value_eur"],"avoidable_waste_eur":e["estimated_avoidable_waste_eur"]
@@ -864,17 +1216,17 @@ class Handler(BaseHTTPRequestHandler):
                 if u["role"] not in ("admin","planner"):return self._json({"error":"forbidden"},403)
                 p=active_pilot()
                 if not p:return self._json({"error":"no active pilot"},404)
-                sb.table("pilots").update({"active":False,"updated_at":now_iso()}).eq("id",p["id"]).execute()
+                sb.table("pilots").update({"active":False,"updated_at":now_iso()}).eq("organization_id",current_org_id(required=True)).eq("id",p["id"]).execute()
                 r=management_report()
                 r.update({"available":True,"pilot":p,"sample_quality":{"outcomes":r["sample_quality"]["outcomes"],"minimum_for_conclusion":10,"sufficient":r["sample_quality"]["outcomes"]>=10},"conclusion":{"status":"positief" if r["decision"]["status"]=="positief_signaal" else "verbeteren" if r["decision"]["status"]!="onvoldoende_data" else "onvoldoende_data","text":r["decision"]["reason"]},"goals":[]})
                 return self._json(r)
             if path=="/api/pilot-reset":
                 if u["role"]!="admin":return self._json({"error":"forbidden"},403)
                 if str(body.get("confirm") or "")!="RESET PILOT DATA":return self._json({"error":"bevestigingstekst klopt niet"},400)
-                atts=resp_data(sb.table("attachments").select("storage_path").execute())
+                org_id=current_org_id(required=True)
+                atts=resp_data(sb.table("attachments").select("storage_path").eq("organization_id",org_id).execute())
                 for table in ("pilot_snapshots","pilots","notes","attachments","audit","cases"):
-                    # neq id 0 is a portable "all normal rows" filter for identity ids.
-                    sb.table(table).delete().neq("id",0).execute()
+                    sb.table(table).delete().eq("organization_id",org_id).neq("id",0).execute()
                 paths=[a["storage_path"] for a in atts if a.get("storage_path")]
                 if paths:
                     try:sb.storage.from_(BUCKET).remove(paths)
@@ -889,7 +1241,7 @@ class Handler(BaseHTTPRequestHandler):
                 facts,missing,score,dispatch,prep,fault=core.analyze(typ,problem,extra)
                 brand=core.canonical_brand(extra.get("manufacturer"));src=core.source_for(brand);rk=core.route_knowledge(fault["category"]);fk=core.ftf_knowledge(fault["category"])
                 row=first(sb.table("cases").insert({
-                    "case_no":"PF-"+str(int(time.time()*1000))[-8:],"source":"planner","customer":body.get("customer") or "Nieuwe klant",
+                    "organization_id":current_org_id(required=True),"case_no":"WS-"+str(int(time.time()*1000))[-8:],"source":"planner","customer":body.get("customer") or "Nieuwe klant",
                     "city":body.get("city"),"type":typ,"asset":((brand+" "+str(extra.get("model") or "")).strip() if brand!="Onbekend" else "Nog te identificeren"),
                     "status":"Review" if not missing else "Info ontbreekt","score":score,"problem":problem,"facts":facts,"missing":missing,"dispatch":dispatch,"prep":prep,
                     "assigned_to":body.get("assigned_to"),"created_by":u["id"],"version":1,"created_at":now_iso(),"updated_at":now_iso(),
@@ -916,7 +1268,7 @@ class Handler(BaseHTTPRequestHandler):
                     "outcome_planner_minutes":float(body["planner_minutes"]) if body.get("planner_minutes") not in ("",None) else None,
                     "outcome_recorded_at":now_iso(),"updated_at":now_iso()
                 }
-                row=first(sb.table("cases").update(update).eq("id",cid).execute())
+                row=first(sb.table("cases").update(update).eq("organization_id",current_org_id(required=True)).eq("id",cid).execute())
                 create_audit(cid,u["id"],"outcome_recorded",json.dumps({"second_visit_required":update["outcome_second_visit_required"],"preventable":update["outcome_preventable"]}))
                 return self._json(row)
             if path.startswith("/api/cases/") and path.endswith("/notes"):
@@ -924,27 +1276,53 @@ class Handler(BaseHTTPRequestHandler):
                 if not can_access_case(u,c):return self._json({"error":"not found"},404)
                 text=str(body.get("body") or "").strip()
                 if not text:return self._json({"error":"empty note"},400)
-                sb.table("notes").insert({"case_id":cid,"body":text,"created_by":u["id"],"created_at":now_iso()}).execute()
+                sb.table("notes").insert({"organization_id":current_org_id(required=True),"case_id":cid,"body":text,"created_by":u["id"],"created_at":now_iso()}).execute()
                 create_audit(cid,u["id"],"note_added","");return self._json({"ok":True},201)
             if path.startswith("/api/cases/") and path.endswith("/attachments"):
                 cid=int(path.split("/")[3]);c=get_case(cid)
                 if not can_access_case(u,c):return self._json({"error":"not found"},404)
                 raw=base64.b64decode(str(body.get("data_base64") or ""),validate=True)
                 if len(raw)>5*1024*1024:return self._json({"error":"bestand groter dan 5 MB"},400)
-                name=safe_filename(body.get("filename"));storage_path=f"{cid}/{secrets.token_hex(12)}-{name}"
+                name=safe_filename(body.get("filename"));storage_path=f"org/{current_org_id(required=True)}/cases/{cid}/{secrets.token_hex(12)}-{name}"
                 ctype=body.get("content_type") or "application/octet-stream"
                 sb.storage.from_(BUCKET).upload(path=storage_path,file=io.BytesIO(raw),file_options={"content-type":ctype,"upsert":"false"})
-                row=first(sb.table("attachments").insert({"case_id":cid,"filename":name,"storage_path":storage_path,"content_type":ctype,"size_bytes":len(raw),"created_by":u["id"],"created_at":now_iso()}).execute())
+                row=first(sb.table("attachments").insert({"organization_id":current_org_id(required=True),"case_id":cid,"filename":name,"storage_path":storage_path,"content_type":ctype,"size_bytes":len(raw),"created_by":u["id"],"created_at":now_iso()}).execute())
                 create_audit(cid,u["id"],"attachment_added",name);return self._json(row,201)
             return self._json({"error":"not found"},404)
         except Exception as e:
+            _record_server_error("POST "+str(locals().get("path","unknown")), e)
             print("POST ERROR",repr(e),file=sys.stderr);return self._json({"error":"server_error"},500)
 
     def do_PATCH(self):
+        _set_org_context(None)
         if not self._check_origin():return self._json({"error":"invalid origin"},403)
         try:
             path=urlparse(self.path).path;body=self._body();u=self._need()
             if not u:return
+            if path.startswith("/api/owner/organizations/"):
+                if not u.get("is_platform_owner"):return self._json({"error":"forbidden"},403)
+                oid=int(path.split("/")[4])
+                org=organization_by_id(oid)
+                if not org:return self._json({"error":"organisatie niet gevonden"},404)
+                upd={}
+                if "name" in body and str(body["name"]).strip():upd["name"]=str(body["name"]).strip()
+                if "status" in body:
+                    if body["status"] not in ("onboarding","pilot","active","suspended","archived"):return self._json({"error":"ongeldige status"},400)
+                    upd["status"]=body["status"]
+                if "plan" in body:
+                    if body["plan"] not in ("internal","pilot","starter","growth","enterprise"):return self._json({"error":"ongeldig plan"},400)
+                    upd["plan"]=body["plan"]
+                for k in ("support_email","privacy_url"):
+                    if k in body:upd[k]=str(body[k] or "").strip() or None
+                if upd.get("support_email") and "@" not in upd["support_email"]:return self._json({"error":"ongeldig support e-mailadres"},400)
+                if upd.get("privacy_url") and not re.match(r"^https?://",upd["privacy_url"],re.I):return self._json({"error":"ongeldige privacy-URL"},400)
+                upd["updated_at"]=now_iso()
+                row=first(sb.table("organizations").update(upd).eq("id",oid).execute())
+                if "name" in upd:set_setting("company_name",upd["name"],organization_id=oid)
+                if "support_email" in upd:set_setting("support_email",upd["support_email"] or "",organization_id=oid)
+                if "privacy_url" in upd:set_setting("privacy_url",upd["privacy_url"] or "",organization_id=oid)
+                return self._json(row)
+
             if path=="/api/settings":
                 if u["role"] not in ("admin","planner"):return self._json({"error":"forbidden"},403)
                 allowed={"company_name":str,"baseline_planner_minutes":float,"planner_hourly_cost":float,"technician_hourly_cost":float,"avg_site_visit_minutes":float,"avg_roundtrip_km":float,"cost_per_km":float,"software_monthly_cost":float,"monthly_case_volume":float,"brand_name":str,"brand_accent":str,"support_email":str,"privacy_url":str,"customer_portal_title":str}
@@ -964,7 +1342,7 @@ class Handler(BaseHTTPRequestHandler):
                 for k in ("display_name","role","active"):
                     if k in body:upd[k]=body[k]
                 if "role" in upd and upd["role"] not in ("admin","planner","technician"):return self._json({"error":"invalid role"},400)
-                row=first(sb.table("users").update(upd).eq("id",uid).execute());create_audit(None,u["id"],"account_updated",json.dumps({"target_user_id":uid,"changes":upd}))
+                row=first(sb.table("users").update(upd).eq("organization_id",current_org_id(required=True)).eq("id",uid).execute());create_audit(None,u["id"],"account_updated",json.dumps({"target_user_id":uid,"changes":upd}))
                 return self._json({k:v for k,v in row.items() if k!="password_hash"})
             if path.startswith("/api/cases/"):
                 cid=int(path.split("/")[3]);c=get_case(cid)
@@ -980,12 +1358,13 @@ class Handler(BaseHTTPRequestHandler):
                 if new_status=="Ingepland" and not c.get("scheduled_at"):upd["scheduled_at"]=now_iso()
                 if new_status=="Afgerond" and not c.get("closed_at"):upd["closed_at"]=now_iso()
                 upd["version"]=expected+1;upd["updated_at"]=now_iso()
-                row=first(sb.table("cases").update(upd).eq("id",cid).eq("version",expected).execute())
+                row=first(sb.table("cases").update(upd).eq("organization_id",current_org_id(required=True)).eq("id",cid).eq("version",expected).execute())
                 if not row:return self._json({"error":"version_conflict","remote":get_case(cid)},409)
                 create_audit(cid,u["id"],"case_updated",json.dumps({"status":new_status}))
                 return self._json(row)
             return self._json({"error":"not found"},404)
         except Exception as e:
+            _record_server_error("PATCH "+str(locals().get("path","unknown")), e)
             print("PATCH ERROR",repr(e),file=sys.stderr);return self._json({"error":"server_error"},500)
 
 if __name__=="__main__":

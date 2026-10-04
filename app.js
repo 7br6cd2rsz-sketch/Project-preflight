@@ -1,14 +1,135 @@
-let token=null,me=null,cases=[],users=[],current=null,settings=null,attachmentFiles=[];
+let token=null,me=null,cases=[],users=[],current=null,settings=null,attachmentFiles=[],systemTimer=null,ownerOrganizations=[];
 const $=id=>document.getElementById(id);
 async function api(path,opts={}){let h={"Content-Type":"application/json",...(opts.headers||{})};let r=await fetch(path,{...opts,headers:h,credentials:"same-origin"});let t=await r.text(),d;try{d=t?JSON.parse(t):null}catch{d=t}if(!r.ok){let e=new Error(d?.error||t||r.status);e.status=r.status;e.data=d;throw e}return d}
-function show(v){document.querySelectorAll("main>section").forEach(x=>x.classList.add("hidden"));$(v+"View").classList.remove("hidden");document.querySelectorAll("nav button").forEach(b=>b.classList.toggle("active",b.dataset.view===v));window.scrollTo(0,0);if(v==="metrics")loadMetrics();if(v==="pilot")loadPilot();if(v==="report")loadReport();if(v==="product")loadProductManagement();if(v==="audit")loadAudit()}
+function show(v){
+ if(systemTimer){clearInterval(systemTimer);systemTimer=null}
+ document.querySelectorAll("main>section").forEach(x=>x.classList.add("hidden"));
+ $(v+"View").classList.remove("hidden");
+ document.querySelectorAll("nav button").forEach(b=>b.classList.toggle("active",b.dataset.view===v));
+ window.scrollTo(0,0);
+ if(v==="metrics")loadMetrics();
+ if(v==="pilot")loadPilot();
+ if(v==="report")loadReport();
+ if(v==="product")loadProductManagement();
+ if(v==="audit")loadAudit();
+ if(v==="owner")loadOwnerConsole();
+ if(v==="system"){
+   loadSystemStatus();
+   systemTimer=setInterval(()=>{if(!$("systemView").classList.contains("hidden"))loadSystemStatus(true)},60000);
+ }
+}
 document.querySelectorAll("nav button").forEach(b=>b.onclick=()=>show(b.dataset.view));
 function pill(s){let c=s==="Ingepland"||s==="Afgerond"?"good":s==="Info ontbreekt"?"warn":"";return `<span class="pill ${c}">${escapeReport(s)}</span>`}
 async function loginNow(){try{let d=await api("/api/login",{method:"POST",body:JSON.stringify({email:email.value,password:password.value})});me=d.user;await boot()}catch(e){loginMsg.textContent=e.message}}
-async function boot(){try{me=await api("/api/me");login.classList.add("hidden");app.classList.remove("hidden");who.textContent=`${me.display_name} · ${me.role}`;metricsNav.style.display=me.role==="technician"?"none":"";reportNav.style.display=me.role==="technician"?"none":"";pilotNav.style.display=me.role==="technician"?"none":"";onboardingNav.style.display=me.role==="technician"?"none":"";productNav.style.display=me.role==="technician"?"none":"";settingsNav.style.display=me.role==="technician"?"none":"";teamNav.style.display=me.role==="technician"?"none":"";auditNav.style.display=me.role==="technician"?"none":"";newBtn.style.display=me.role==="technician"?"none":"";newBtn2.style.display=me.role==="technician"?"none":"";await Promise.all([loadCases(),me.role==="technician"?Promise.resolve():loadUsers(),me.role==="technician"?Promise.resolve():loadSettings()]);if(settings)applyBranding(settings);render();if(me.role==="technician")show("workorders");else{let ob=await api("/api/onboarding-status");if(!ob.complete){initOnboarding(ob);show("onboarding")}}}catch(e){token=null}}
+async function boot(){try{me=await api("/api/me");login.classList.add("hidden");app.classList.remove("hidden");who.textContent=`${me.display_name} · ${me.is_platform_owner?"eigenaar · ":""}${me.role} · ${me.organization_name||""}`;metricsNav.style.display=me.role==="technician"?"none":"";reportNav.style.display=me.role==="technician"?"none":"";pilotNav.style.display=me.role==="technician"?"none":"";onboardingNav.style.display=me.role==="technician"?"none":"";productNav.style.display=me.role==="technician"?"none":"";systemNav.style.display=me.role==="admin"?"":"none";ownerNav.style.display=me.is_platform_owner?"":"none";settingsNav.style.display=me.role==="technician"?"none":"";teamNav.style.display=me.role==="technician"?"none":"";auditNav.style.display=me.role==="technician"?"none":"";newBtn.style.display=me.role==="technician"?"none":"";newBtn2.style.display=me.role==="technician"?"none":"";await Promise.all([loadCases(),me.role==="technician"?Promise.resolve():loadUsers(),me.role==="technician"?Promise.resolve():loadSettings()]);if(settings)applyBranding(settings);render();if(me.role==="technician")show("workorders");else{let ob=await api("/api/onboarding-status");if(!ob.complete){initOnboarding(ob);show("onboarding")}}}catch(e){token=null}}
 async function loadCases(){cases=await api("/api/cases")}
 async function loadUsers(){users=await api("/api/users")}
 async function loadSettings(){settings=await api("/api/settings")}
+function fmtDateTime(v){
+ if(!v)return "—";
+ try{return new Date(v).toLocaleString("nl-NL")}catch{return String(v)}
+}
+function fmtUptime(sec){
+ sec=Math.max(0,Number(sec)||0);
+ let d=Math.floor(sec/86400),h=Math.floor((sec%86400)/3600),m=Math.floor((sec%3600)/60);
+ if(d)return `${d}d ${h}u ${m}m`;
+ if(h)return `${h}u ${m}m`;
+ return `${m}m`;
+}
+function setStatusDot(el,status){
+ el.classList.remove("ok","bad","warn");
+ el.classList.add(status==="online"||status==="healthy"?"ok":status==="unknown"?"warn":"bad");
+}
+async function loadSystemStatus(silent=false){
+ if(me?.role!=="admin")return;
+ try{
+  let s=await api("/api/system-status");
+  sysOverall.textContent=s.overall==="healthy"?"Alles operationeel":"Aandacht nodig";
+  sysOverall.className=s.overall==="healthy"?"good":"warn";
+  setStatusDot(sysOverallDot,s.overall);
+  sysChecked.textContent=`Gecontroleerd ${fmtDateTime(s.checked_at)}`;
+
+  sysDb.textContent=s.database?.status==="online"?"Online":"Niet beschikbaar";
+  sysDb.className=s.database?.status==="online"?"good":"warn";
+  sysDbLatency.textContent=s.database?.latency_ms!=null?`${s.database.latency_ms} ms`:"—";
+
+  sysStorage.textContent=s.storage?.status==="online"?"Online":s.storage?.status==="unknown"?"Onbekend":"Niet beschikbaar";
+  sysStorage.className=s.storage?.status==="online"?"good":"warn";
+  sysStorageLatency.textContent=s.storage?.latency_ms!=null?`${s.storage.latency_ms} ms · ${s.storage.bucket||""}`:(s.storage?.bucket||"");
+
+  sysVersion.textContent=s.app?.version||"—";
+  sysCommit.textContent=s.hosting?.commit?`commit ${s.hosting.commit}`:"";
+  sysUptime.textContent=fmtUptime(s.app?.uptime_seconds);
+  sysCases.textContent=String(s.counts?.cases??"—");
+  sysUsers.textContent=String(s.counts?.active_users??"—");
+  sysSessions.textContent=String(s.counts?.active_sessions??"—");
+  sysAttachments.textContent=String(s.counts?.attachments??"—");
+  sysPilots.textContent=String(s.counts?.pilots??"—");
+  sysLastGood.textContent=fmtDateTime(s.monitoring?.last_successful_check);
+  sysStarted.textContent=fmtDateTime(s.app?.started_at);
+  sysHosting.textContent=`${s.hosting?.provider||"Render"} · ${s.organization?.name||me.organization_name||""}`;
+
+  let e=s.monitoring?.last_error;
+  if(e){
+    sysLastError.textContent=`${fmtDateTime(e.at)} · ${e.scope}: ${e.message}`;
+    sysLastError.className="warn";
+  }else{
+    sysLastError.textContent="Geen geregistreerde serverfout sinds de huidige runtime is gestart.";
+    sysLastError.className="good";
+  }
+ }catch(e){
+  sysOverall.textContent="Statuscheck mislukt";
+  sysOverall.className="warn";
+  setStatusDot(sysOverallDot,"bad");
+  sysChecked.textContent=e.message||"Onbekende fout";
+  if(!silent)console.error(e);
+ }
+}
+
+function escAttr(v){return escapeReport(v??"")}
+async function loadOwnerConsole(){
+ if(!me?.is_platform_owner)return;
+ ownerOrganizations=await api("/api/owner/organizations");
+ ownOrganizations.textContent=ownerOrganizations.length;
+ ownActive.textContent=ownerOrganizations.filter(o=>["active","pilot"].includes(o.status)).length;
+ ownOnboarding.textContent=ownerOrganizations.filter(o=>o.status==="onboarding").length;
+ ownCases.textContent=ownerOrganizations.reduce((n,o)=>n+Number(o.cases||0),0);
+ ownerCurrentOrg.textContent=`${me.organization_name||"—"} · ${me.organization_status||""}`;
+ ownerOrgList.innerHTML=`<div class="row head"><div>Organisatie</div><div>Status / plan</div><div>Gebruik</div><div>Laatste activiteit</div><div>Actie</div></div>`+
+ ownerOrganizations.map(o=>`<div class="row">
+   <div><b>${escapeReport(o.name)}</b><br><span class="sub">${escapeReport(o.slug)}</span></div>
+   <div>${pill(o.status)}<br><span class="sub">${escapeReport(o.plan)}</span></div>
+   <div>${Number(o.active_users||0)} gebruikers · ${Number(o.cases||0)} cases<br><span class="sub">${o.active_pilot?"Actieve pilot":"Geen actieve pilot"} · ${o.onboarding_complete?"Onboarding klaar":"Onboarding open"}</span></div>
+   <div>${o.last_activity?escapeReport(new Date(o.last_activity).toLocaleString("nl-NL")):"—"}</div>
+   <div><button class="btn" onclick="switchOrganization(${Number(o.id)})">Open omgeving</button> ${o.plan!=="internal"?`<button class="btn" onclick="toggleOrganization(${Number(o.id)},'${o.status==="suspended"?"active":"suspended"}')">${o.status==="suspended"?"Activeren":"Pauzeren"}</button>`:""}</div>
+ </div>`).join("");
+}
+async function switchOrganization(id){
+ await api("/api/owner/context",{method:"POST",body:JSON.stringify({organization_id:Number(id)})});
+ me=await api("/api/me");
+ await Promise.all([loadCases(),loadUsers(),loadSettings()]);
+ if(settings)applyBranding(settings);
+ render();
+ who.textContent=`${me.display_name} · eigenaar · ${me.role} · ${me.organization_name||""}`;
+ show("owner");
+}
+async function toggleOrganization(id,status){
+ await api(`/api/owner/organizations/${Number(id)}`,{method:"PATCH",body:JSON.stringify({status})});
+ await loadOwnerConsole();
+}
+async function createOrganization(){
+ let payload={
+  name:ownNewName.value.trim(),slug:ownNewSlug.value.trim(),status:ownNewStatus.value,plan:ownNewPlan.value,
+  admin_name:ownAdminName.value.trim(),admin_email:ownAdminEmail.value.trim(),admin_password:ownAdminPassword.value
+ };
+ try{
+  let org=await api("/api/owner/organizations",{method:"POST",body:JSON.stringify(payload)});
+  ownNewName.value=ownNewSlug.value=ownAdminName.value=ownAdminEmail.value=ownAdminPassword.value="";
+  await loadOwnerConsole();
+  alert(`Organisatie ${org.name} is aangemaakt.`);
+ }catch(e){alert(e.message)}
+}
+
 function table(){return `<div class="row head"><div>Klant / case</div><div>Asset</div><div>Status</div><div>Score</div><div>Bron</div></div>`+cases.map(c=>`<div class="row case" onclick="openCase(${Number(c.id)})"><div><b>${escapeReport(c.customer)}</b><br><span class="sub">${escapeReport(c.case_no)} · ${escapeReport(c.city||"")}</span></div><div>${escapeReport(c.asset||"")}</div><div>${pill(c.status)}</div><div>${Number(c.score)||0}%</div><div>${escapeReport(c.source)}</div></div>`).join("")}
 function render(){mCases.textContent=cases.length;mReview.textContent=cases.filter(c=>c.status==="Review").length;mScheduled.textContent=cases.filter(c=>c.status==="Ingepland").length;mReady.textContent=(cases.length?Math.round(cases.reduce((a,c)=>a+c.score,0)/cases.length):0)+"%";dashTable.innerHTML=table();casesTable.innerHTML=table();renderWorkorders();if(me.role!=="technician"){renderTeam();if(settings){intakeLink.textContent=`${location.origin}/intake.html?token=${encodeURIComponent(settings.intake_token)}`}}}
 function renderTeam(){teamList.innerHTML=`<div class="row head"><div>Naam</div><div>E-mail</div><div>Rol</div><div></div><div></div></div>`+users.map(u=>`<div class="row"><div>${escapeReport(u.display_name)}</div><div>${escapeReport(u.email)}</div><div>${escapeReport(u.role)}</div><div></div><div></div></div>`).join("")}
@@ -323,15 +444,15 @@ function showPilotFinal(r){
  show("report");
 }
 
-function applyBranding(s){if(!s)return;document.documentElement.style.setProperty('--accent',s.brand_accent||'#62d0ff');document.title=(s.brand_name||'Project Preflight')+' · Pilot';let brand=document.querySelector('.brand');if(brand&&s.brand_name)brand.childNodes[0].nodeValue=s.brand_name}
-async function loadProductManagement(){let v=await api('/api/version');versionBadge.textContent=`${v.name} ${v.version}`;let s=await api('/api/settings');settings=s;applyBranding(s);pbBrandName.value=s.brand_name||'Project Preflight';pbAccent.value=s.brand_accent||'#62d0ff';pbSupportEmail.value=s.support_email||'';pbPrivacyUrl.value=s.privacy_url||'';pbPortalTitle.value=s.customer_portal_title||'Service-intake';accountAdminCard.style.display=me.role==='admin'?'':'none';if(me.role==='admin')await loadAccounts()}
-async function saveBranding(){let s=await api('/api/settings',{method:'PATCH',body:JSON.stringify({brand_name:pbBrandName.value.trim()||'Project Preflight',brand_accent:pbAccent.value.trim(),support_email:pbSupportEmail.value.trim(),privacy_url:pbPrivacyUrl.value.trim(),customer_portal_title:pbPortalTitle.value.trim()||'Service-intake'})});settings={...(settings||{}),...s};applyBranding(settings);alert('Branding opgeslagen.')}
+function applyBranding(s){if(!s)return;document.documentElement.style.setProperty('--accent',s.brand_accent||'#62d0ff');document.title=(s.brand_name||'Werkstuur')+' · Pilot';let brand=document.querySelector('.brand');if(brand&&s.brand_name)brand.childNodes[0].nodeValue=s.brand_name}
+async function loadProductManagement(){let v=await api('/api/version');versionBadge.textContent=`${v.name} ${v.version}`;let s=await api('/api/settings');settings=s;applyBranding(s);pbBrandName.value=s.brand_name||'Werkstuur';pbAccent.value=s.brand_accent||'#62d0ff';pbSupportEmail.value=s.support_email||'';pbPrivacyUrl.value=s.privacy_url||'';pbPortalTitle.value=s.customer_portal_title||'Service-intake';accountAdminCard.style.display=me.role==='admin'?'':'none';if(me.role==='admin')await loadAccounts()}
+async function saveBranding(){let s=await api('/api/settings',{method:'PATCH',body:JSON.stringify({brand_name:pbBrandName.value.trim()||'Werkstuur',brand_accent:pbAccent.value.trim(),support_email:pbSupportEmail.value.trim(),privacy_url:pbPrivacyUrl.value.trim(),customer_portal_title:pbPortalTitle.value.trim()||'Service-intake'})});settings={...(settings||{}),...s};applyBranding(settings);alert('Branding opgeslagen.')}
 async function changeOwnPassword(){if(!pwCurrent.value||!pwNew.value)return alert('Vul huidig en nieuw wachtwoord in.');await api('/api/change-password',{method:'POST',body:JSON.stringify({current_password:pwCurrent.value,new_password:pwNew.value})});pwCurrent.value='';pwNew.value='';alert('Wachtwoord gewijzigd.')}
 async function loadAccounts(){let rows=await api('/api/accounts');accountList.innerHTML=`<div class="row head"><div>Naam</div><div>E-mail</div><div>Rol</div><div>Status</div><div>Actie</div></div>`+rows.map(u=>`<div class="row"><div>${escapeReport(u.display_name)}</div><div>${escapeReport(u.email)}</div><div>${u.role}</div><div>${u.active?'Actief':'Uit'}</div><div>${u.id===me.id?'Eigen account':`<button class="btn" onclick="toggleAccount(${u.id},${u.active?0:1})">${u.active?'Deactiveer':'Activeer'}</button> <button class="btn" onclick="adminResetPassword(${u.id})">Reset ww</button>`}</div></div>`).join('')}
 async function createAccount(){let r=await api('/api/accounts',{method:'POST',body:JSON.stringify({display_name:accName.value.trim(),email:accEmail.value.trim(),role:accRole.value,password:accPassword.value})});accName.value='';accEmail.value='';accPassword.value='';await loadAccounts();alert(r.created?'Account aangemaakt.':'Account bestond al.')}
 async function toggleAccount(id,active){await api(`/api/accounts/${id}`,{method:'PATCH',body:JSON.stringify({active:!!active})});await loadAccounts()}
 async function adminResetPassword(id){let pwd=prompt('Nieuw tijdelijk wachtwoord (min. 12 tekens):');if(!pwd)return;await api(`/api/accounts/${id}/reset-password`,{method:'POST',body:JSON.stringify({new_password:pwd})});alert('Wachtwoord gereset.')}
-async function downloadOperationalExport(){let d=await api('/api/export');let blob=new Blob([JSON.stringify(d,null,2)],{type:'application/json'});let url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=`project-preflight-export-${new Date().toISOString().slice(0,10)}.json`;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000)}
+async function downloadOperationalExport(){let d=await api('/api/export');let blob=new Blob([JSON.stringify(d,null,2)],{type:'application/json'});let url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=`werkstuur-export-${new Date().toISOString().slice(0,10)}.json`;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000)}
 async function resetPilotData(){if(resetConfirm.value!=='RESET PILOT DATA')return alert('Bevestigingstekst is niet exact correct.');let summary=await api('/api/pilot-reset-summary');if(!confirm(`Dit verwijdert ${summary.cases} cases, ${summary.notes} notities, ${summary.attachments} bijlagen en ${summary.pilots} pilot(s). Doorgaan?`))return;await api('/api/pilot-reset',{method:'POST',body:JSON.stringify({confirm:'RESET PILOT DATA'})});alert('Pilotdata verwijderd.');resetConfirm.value='';await loadCases();render();let ob=await api('/api/onboarding-status');initOnboarding(ob);show('onboarding')}
 
 async function loadAudit(){if(me.role==="technician")return;let a=await api("/api/audit");auditList.innerHTML=a.map(x=>`<div class="row"><div>${escapeReport(new Date(x.created_at).toLocaleString("nl-NL"))}</div><div>${escapeReport(x.display_name||"Klant")}</div><div>${escapeReport(x.action)}</div><div>${escapeReport(x.detail||"")}</div><div></div></div>`).join("")}
