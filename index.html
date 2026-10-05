@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="nl"><head><meta charset="utf-8"/><meta content="width=device-width,initial-scale=1" name="viewport"/>
+<html lang="nl"><head><meta charset="utf-8"/><meta content="width=device-width,initial-scale=1,viewport-fit=cover" name="viewport"/>
 <meta content="Werkstuur" name="application-name"/>
 <meta content="Werkstuur" name="apple-mobile-web-app-title"/>
 <meta content="yes" name="apple-mobile-web-app-capable"/>
@@ -8,191 +8,66 @@
 <link href="/manifest.webmanifest" rel="manifest"/>
 <link href="/apple-touch-icon.png" rel="apple-touch-icon" sizes="180x180"/>
 <link href="/icon-192.png" rel="icon" sizes="192x192" type="image/png"/>
-<link href="/icon-512.png" rel="icon" sizes="512x512" type="image/png"/><meta content="#07131f" name="theme-color"/><title>Werkstuur · Serviceomgeving</title>
-<style>
-:root{--bg:#06101c;--panel:#0e1a2b;--line:#243b58;--text:#edf6ff;--muted:#8da4ba;--accent:#62d0ff;--good:#78e4aa;--warn:#ffd166;--danger:#ff8195}
-*{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at 10% 0,#0d2946,#06101c 45%);color:var(--text);font-family:Inter,system-ui,sans-serif}button,input,textarea,select{font:inherit}.hidden{display:none!important}
-.login{min-height:100vh;display:grid;place-items:center;padding:20px}.loginbox{width:min(440px,95vw);background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:22px}.loginbox h1{margin:5px 0}.sub{color:var(--muted);font-size:12px}.field{margin:12px 0}.field label{display:block;color:var(--muted);font-size:10px;margin-bottom:5px}.field input,.field textarea,.field select{width:100%;padding:10px;border:1px solid var(--line);border-radius:10px;background:#091526;color:#fff}.btn{border:1px solid var(--line);border-radius:10px;background:#13233a;color:#fff;padding:9px 12px;cursor:pointer}.primary{background:linear-gradient(135deg,#41caf8,#7193ff);color:#06111b;border:0;font-weight:800}.good{color:var(--good)}.warn{color:var(--warn)}
-.app{display:grid;grid-template-columns:255px 1fr;min-height:100vh}aside{background:#050d18;border-right:1px solid var(--line);padding:16px 12px;position:sticky;top:0;height:100vh}.brand{padding:8px;font-weight:800}.brand small{display:block;color:var(--muted);font-weight:400;margin-top:3px}nav button{display:block;width:100%;border:0;background:transparent;color:#bdcada;text-align:left;padding:11px 12px;border-radius:9px;margin:3px 0;cursor:pointer}nav button.active,nav button:hover{background:#15263e;color:#fff}.side{position:absolute;bottom:14px;left:12px;right:12px;color:var(--muted);font-size:10px}
-main{padding:24px 28px 60px}.top{display:flex;justify-content:space-between;align-items:flex-start;gap:15px}.eyebrow{color:var(--accent);text-transform:uppercase;letter-spacing:.15em;font-size:10px}h2{font-size:28px;margin:4px 0}.grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:18px}.card{background:var(--panel);border:1px solid var(--line);border-radius:15px;padding:15px}.metric small{color:var(--muted)}.metric b{display:block;font-size:26px;margin-top:7px}
-.table{padding:0;overflow:hidden;margin-top:18px}.row{display:grid;grid-template-columns:1.35fr 1fr .9fr .7fr .7fr;gap:10px;padding:13px 15px;border-bottom:1px solid var(--line);font-size:12px;align-items:center}.row.head{color:var(--muted);font-size:10px;text-transform:uppercase}.row.case{cursor:pointer}.row.case:hover{background:#13243a}.pill{display:inline-block;border:1px solid var(--line);border-radius:99px;padding:4px 8px;font-size:10px}.grid2{display:grid;grid-template-columns:1.2fr .8fr;gap:13px}.section{margin-top:18px}.kv{display:grid;grid-template-columns:125px 1fr;gap:7px;font-size:12px;margin:8px 0}.kv span:first-child{color:var(--muted)}.check{border:1px solid var(--line);background:#091526;border-radius:9px;padding:9px;margin:6px 0;font-size:11px}.note,.attachment{border:1px solid var(--line);background:#091526;border-radius:10px;padding:10px;margin:7px 0;font-size:11px}.note small,.attachment small{color:var(--muted)}.modal{position:fixed;inset:0;background:rgba(0,0,0,.68);display:grid;place-items:center;padding:18px}.modalbox{width:min(720px,96vw);max-height:92vh;overflow:auto;background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:18px}.msg{margin-top:10px;font-size:11px;color:var(--warn)}.linkbox{word-break:break-all;background:#091526;border:1px solid var(--line);padding:10px;border-radius:9px;font-size:11px}
-@media(max-width:900px){.app{grid-template-columns:1fr}aside{height:auto;position:static}nav{display:flex;overflow:auto}nav button{width:auto;white-space:nowrap}.side{display:none}main{padding:16px 12px 60px}.grid4{grid-template-columns:repeat(2,1fr)}.grid2{grid-template-columns:1fr}.row{grid-template-columns:1.4fr .9fr .7fr}.row>*:nth-child(4),.row>*:nth-child(5){display:none}}
-@media(max-width:520px){.grid4{grid-template-columns:1fr}.top{flex-direction:column}.row{grid-template-columns:1.4fr .8fr}.row>*:nth-child(3){display:none}}
+<link href="/icon-512.png" rel="icon" sizes="512x512" type="image/png"/><meta content="#07131f" name="theme-color"/><title>Werkstuur · Serviceomgeving</title><meta name="robots" content="noindex,nofollow">
 
 
-.statusline{display:flex;align-items:center;gap:8px;font-size:12px}
-.statusdot{width:9px;height:9px;border-radius:50%;background:var(--muted);display:inline-block}
-.statusdot.ok{background:var(--good);box-shadow:0 0 0 4px rgba(91,223,165,.10)}
-.statusdot.bad{background:var(--bad);box-shadow:0 0 0 4px rgba(255,107,107,.10)}
-.statusdot.warn{background:var(--warn);box-shadow:0 0 0 4px rgba(255,194,88,.10)}
-.statusmono{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;font-size:11px;word-break:break-all}
-@media print{
- body{background:white!important;color:#111!important}
- aside,.top button,#login{display:none!important}
- .app{display:block!important}
- main{padding:0!important}
- main>section{display:none!important}
- #reportView{display:block!important}
- .card{background:white!important;color:#111!important;box-shadow:none!important;border:1px solid #ccc!important}
- .sub,.kv span:first-child{color:#555!important}
- .eyebrow{color:#2563eb!important}
- a{color:#111!important;text-decoration:none!important}
-}
-</style><style>
-/* ===== Werkstuur Control Center base ===== */
-:root{
- --cc-bg:#07111d;
- --cc-side:#050c15;
- --cc-surface:#0d1928;
- --cc-surface-2:#101f31;
- --cc-line:#1d334b;
- --cc-line-soft:rgba(132,164,193,.12);
- --cc-text:#f2f7fb;
- --cc-muted:#8499ac;
- --cc-accent:#62d0ff;
- --cc-accent-soft:rgba(98,208,255,.10);
- --cc-good:#69dfa5;
- --cc-warn:#ffd166;
- --cc-shadow:0 18px 48px rgba(0,0,0,.20);
-}
-body{background:linear-gradient(180deg,#07111d 0%,#081522 100%);background-attachment:fixed}
-.app{grid-template-columns:270px minmax(0,1fr);background:transparent}
-.app>aside{background:linear-gradient(180deg,#050c15,#07101a);border-right:1px solid #14283c;padding:18px 14px;height:100vh;overflow-y:auto;overflow-x:hidden}
-.cc-brand{display:flex;align-items:center;gap:11px;padding:5px 7px 20px;border-bottom:1px solid var(--cc-line-soft);margin-bottom:14px}
-.cc-brandmark{width:38px;height:38px;border-radius:12px;display:grid;place-items:center;background:linear-gradient(145deg,#122a40,#0b1d2e);color:var(--cc-accent);font-size:19px;font-weight:950;box-shadow:inset 0 0 0 1px rgba(98,208,255,.17)}
-.cc-brandcopy{display:flex;flex-direction:column;line-height:1.15}.cc-brandcopy strong{font-size:14px;letter-spacing:.11em}.cc-brandcopy span{font-size:10px;color:#6f879b;margin-top:5px}
-.cc-nav{display:block!important}.cc-navgroup{margin:15px 0}.cc-navlabel{padding:0 11px 7px;color:#536b7f;font-size:9px;font-weight:900;letter-spacing:.16em}
-.cc-nav button,.cc-advanced button{display:flex!important;align-items:center;gap:11px;width:100%!important;padding:9px 10px!important;margin:2px 0!important;border-radius:10px!important;color:#8fa4b6!important;font-size:12px!important;font-weight:650!important;transition:.16s ease}
-.cc-nav button:hover,.cc-advanced button:hover{background:#0d1c2c!important;color:#eaf5fc!important}
-.cc-nav button.active{background:linear-gradient(90deg,rgba(98,208,255,.15),rgba(98,208,255,.06))!important;color:#fff!important;box-shadow:inset 3px 0 0 var(--cc-accent)}
-.cc-navicon{width:25px;height:25px;border:1px solid #1d3449;border-radius:8px;display:grid;place-items:center;font-size:11px;color:#7492a9;flex:0 0 25px;background:#091421}
-.cc-nav button.active .cc-navicon{color:var(--cc-accent);border-color:rgba(98,208,255,.25);background:rgba(98,208,255,.08)}
-.cc-advanced{margin:14px 0 90px;border-top:1px solid var(--cc-line-soft);padding-top:12px}
-.cc-advanced summary{cursor:pointer;list-style:none;color:#60778b;font-size:10px;font-weight:800;padding:8px 11px;border-radius:9px}.cc-advanced summary::-webkit-details-marker{display:none}.cc-advanced summary:after{content:"＋";float:right}
-.cc-advanced[open] summary:after{content:"−"}
-.cc-profile{position:sticky;bottom:0;display:grid;grid-template-columns:34px minmax(0,1fr) 30px;gap:9px;align-items:center;padding:10px;background:rgba(10,23,36,.96);backdrop-filter:blur(12px);border:1px solid #183047;border-radius:13px;box-shadow:0 -12px 30px rgba(5,12,21,.55)}
-.cc-avatar{width:34px;height:34px;border-radius:10px;display:grid;place-items:center;background:#13283b;color:var(--cc-accent);font-size:10px;font-weight:900}.cc-profilecopy{min-width:0}.cc-profilecopy strong{display:block;font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.cc-profilecopy span{display:block;color:#71879a;font-size:9px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.cc-logout{border:0;background:transparent;color:#6d8293;cursor:pointer;font-size:16px;padding:5px;border-radius:8px}.cc-logout:hover{background:#14263a;color:#fff}
-main{padding:0 32px 60px;max-width:1550px;width:100%;margin:0 auto}
-.cc-workspacebar{height:66px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--cc-line-soft);margin-bottom:27px;position:sticky;top:0;z-index:15;background:rgba(7,17,29,.88);backdrop-filter:blur(15px)}
-.cc-workspace{display:flex;align-items:center;gap:9px}.cc-workspace-label{font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:#526b7f}.cc-workspace strong{font-size:12px}.cc-workspace-pill{font-size:9px;padding:4px 7px;border:1px solid #26445d;background:#0a1a28;border-radius:99px;color:#83b9d2;text-transform:uppercase}
-.cc-page{display:flex;align-items:center;gap:14px;color:#70869a;font-size:10px}.cc-live{display:flex;align-items:center;gap:6px}.cc-live i{width:6px;height:6px;border-radius:50%;background:var(--cc-good);box-shadow:0 0 0 4px rgba(105,223,165,.07)}
-.cc-pagehead{display:flex;justify-content:space-between;align-items:flex-start;gap:18px;margin-bottom:21px}.cc-pagehead h2{font-size:31px;letter-spacing:-.035em;margin:4px 0 5px}.cc-pagehead .sub{font-size:11px;max-width:660px}
-.cc-metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin:0 0 17px}.cc-metric{display:flex;align-items:center;gap:13px;background:linear-gradient(145deg,#0d1928,#0a1624);border:1px solid #172d42;border-radius:16px;padding:15px 16px;min-height:94px;box-shadow:0 10px 30px rgba(0,0,0,.10)}.cc-metric.attention{border-color:rgba(255,209,102,.24)}.cc-metric.readiness{border-color:rgba(98,208,255,.22)}
-.cc-metricicon{width:38px;height:38px;border-radius:11px;display:grid;place-items:center;background:#0b1b2a;border:1px solid #1b354d;color:#79b8d4;font-size:14px;flex:0 0 38px}.cc-metric.attention .cc-metricicon{color:var(--cc-warn)}.cc-metric.readiness .cc-metricicon{color:var(--cc-accent)}
-.cc-metric small{display:block;color:#7f94a5;font-size:9px;text-transform:uppercase;letter-spacing:.08em}.cc-metric b{display:block;font-size:25px;line-height:1.05;margin:4px 0 2px;letter-spacing:-.025em}.cc-metric span{display:block;color:#526b7e;font-size:9px}
-.cc-dashboardgrid{display:grid;grid-template-columns:minmax(0,1.7fr) minmax(260px,.65fr);gap:14px}.cc-panel{background:linear-gradient(150deg,#0d1928,#0a1624);border:1px solid #172d42;border-radius:17px;padding:16px;box-shadow:0 12px 35px rgba(0,0,0,.10)}.cc-mainpanel{padding:0;overflow:hidden}.cc-panelhead{display:flex;justify-content:space-between;gap:15px;align-items:center;padding:16px}.cc-panelhead h3{margin:2px 0 0;font-size:15px}.cc-kicker{display:block;font-size:8px;letter-spacing:.14em;color:#567185;font-weight:900}.cc-textbtn{border:0;background:transparent;color:#72bddb;font-size:10px;font-weight:750;cursor:pointer;padding:6px}.cc-textbtn:hover{color:#a0e3ff}
-.cc-sidepanel{display:grid;gap:14px;align-content:start}.cc-actions{display:grid;gap:7px}.cc-action{display:flex;align-items:center;gap:11px;text-align:left;background:#0a1725;color:#dceaf4;border:1px solid #172f45;border-radius:12px;padding:10px;cursor:pointer}.cc-action:hover{border-color:#28516e;background:#0d1c2c}.cc-action>span{width:29px;height:29px;display:grid;place-items:center;border-radius:9px;background:#12263a;color:#70b4d1;font-weight:900}.cc-action b{display:block;font-size:10px}.cc-action small{display:block;color:#617a8d;font-size:8px;margin-top:2px}.cc-action.primary-action{border-color:rgba(98,208,255,.25);background:rgba(98,208,255,.06)}.cc-action.primary-action>span{background:rgba(98,208,255,.11);color:var(--cc-accent)}
-.cc-contextpanel p,.cc-info p{font-size:10px;color:#70879a;margin:7px 0 12px}.cc-contextpanel h3{font-size:15px;margin:4px 0}
-.cc-table{margin-top:0!important;border:0!important;border-radius:0!important;background:transparent!important}.cc-table .row{padding:12px 16px}.cc-table .row.head{background:#091522}.cc-table .row.case:hover{background:#0e1f30}
-.card{box-shadow:none}.table{border-radius:15px}
-.cc-ownergrid{display:grid;grid-template-columns:minmax(0,1.7fr) minmax(280px,.65fr);gap:14px}.cc-owner-side{display:grid;gap:14px;align-content:start}.cc-contextvalue{font-size:9px;color:#668196}.cc-orglist{display:grid;gap:8px}.cc-orgcard{display:grid;grid-template-columns:minmax(150px,1.3fr) .8fr .9fr auto;gap:12px;align-items:center;padding:12px;border:1px solid #172e44;background:#091624;border-radius:12px}.cc-orgcard:hover{border-color:#28516e}.cc-orgname b{font-size:11px}.cc-orgname small,.cc-orgmeta small{display:block;color:#657d90;font-size:8px;margin-top:3px}.cc-orgmeta{font-size:9px}.cc-orgactions{display:flex;gap:6px;justify-content:flex-end}.cc-orgactions .btn{font-size:9px;padding:7px 8px}.cc-orgstatus{display:flex;align-items:center;gap:6px;font-size:9px}.cc-orgstatus i{width:7px;height:7px;border-radius:50%;background:#5f7688}.cc-orgstatus i.active,.cc-orgstatus i.pilot{background:var(--cc-good)}.cc-orgstatus i.onboarding{background:var(--cc-warn)}.cc-orgstatus i.suspended{background:var(--danger)}
-.cc-createorg{background:linear-gradient(150deg,#0d1928,#0a1624);border:1px solid #172d42;border-radius:17px;overflow:hidden}.cc-createorg summary{cursor:pointer;list-style:none;padding:15px;font-size:11px;font-weight:800;color:#cbd9e3}.cc-createorg summary::-webkit-details-marker{display:none}.cc-createorg summary span{color:var(--cc-accent);margin-right:7px}.cc-createbody{padding:2px 15px 15px;border-top:1px solid #172d42}.cc-formgrid{display:grid;grid-template-columns:1fr 1fr;gap:9px}.cc-divider{border-top:1px solid #172d42;margin:14px 0}
-.full{width:100%}
-.field label{font-size:9px}.field input,.field textarea,.field select{padding:9px 10px;background:#081522;border-color:#1a3349}
-.btn{font-size:10px;padding:8px 11px;border-radius:9px}.primary{box-shadow:none}
-.row{font-size:10px}.row.head{font-size:8px}.pill{font-size:8px;padding:3px 7px}
-.section{margin-top:14px}
-@media(max-width:1100px){.cc-metrics{grid-template-columns:repeat(2,1fr)}.cc-dashboardgrid,.cc-ownergrid{grid-template-columns:1fr}.cc-sidepanel,.cc-owner-side{grid-template-columns:repeat(2,1fr)}}
-@media(max-width:900px){
- .app{grid-template-columns:1fr}
- .app>aside{height:auto;position:sticky;top:0;z-index:40;padding:8px 10px;overflow:visible;border-right:0;border-bottom:1px solid #14283c}
- .cc-brand{display:none}.cc-profile{display:none}
- .cc-nav{display:flex!important;overflow-x:auto;gap:5px;padding-bottom:2px;scrollbar-width:none}.cc-nav::-webkit-scrollbar{display:none}
- .cc-navgroup{display:flex;margin:0;gap:4px}.cc-navlabel{display:none}.cc-nav button,.cc-advanced button{width:auto!important;white-space:nowrap!important;padding:7px 9px!important}.cc-navicon{display:none}.cc-advanced{display:none}
- main{padding:0 13px 50px}
- .cc-workspacebar{height:52px;margin-bottom:17px;top:49px}.cc-workspace-label,.cc-page>span:first-child{display:none}.cc-page{font-size:9px}.cc-workspace strong{font-size:10px}
- .cc-pagehead{margin-bottom:15px}.cc-pagehead h2{font-size:25px}.cc-pagehead .sub{font-size:10px}
- .cc-metrics{grid-template-columns:repeat(2,1fr);gap:8px}.cc-metric{min-height:78px;padding:11px}.cc-metricicon{width:31px;height:31px;flex-basis:31px}.cc-metric b{font-size:21px}
- .cc-sidepanel,.cc-owner-side{grid-template-columns:1fr}
- .cc-orgcard{grid-template-columns:1fr auto}.cc-orgmeta{display:none}.cc-orgstatus{grid-column:1}.cc-orgactions{grid-column:2;grid-row:1/3}
-}
-@media(max-width:520px){
- .cc-metrics{grid-template-columns:1fr 1fr}.cc-metric{gap:8px}.cc-metricicon{display:none}.cc-metric span{display:none}.cc-pagehead{flex-direction:column}.cc-pagehead>.btn{width:100%}
- .cc-formgrid{grid-template-columns:1fr}
- .cc-panel{padding:12px}.cc-panelhead{padding:13px}
-}
-</style><style>
-/* ===== Werkstuur · Smooth Operations ===== */
-:root{--cc-bg:#07131f;--cc-side:#07111a;--cc-surface:#0d1a28;--cc-surface-2:#102131;--cc-line:#1d3449;--cc-line-soft:rgba(154,181,202,.11);--cc-text:#f5f8fb;--cc-muted:#8ca1b2;--cc-accent:#69d5ff;--cc-accent-soft:rgba(105,213,255,.11);--cc-good:#77e0aa;--cc-warn:#ffd36e;--cc-shadow:0 18px 55px rgba(0,0,0,.18)}
-html{scroll-behavior:smooth}body{background:radial-gradient(circle at 73% -10%,rgba(51,108,144,.20),transparent 34%),linear-gradient(180deg,#07131f 0,#08131e 100%);font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;letter-spacing:-.005em}button,input,textarea,select{outline:none}button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-visible{box-shadow:0 0 0 3px rgba(105,213,255,.16)!important;border-color:rgba(105,213,255,.55)!important}
-.login{padding:28px;background:radial-gradient(circle at 12% 4%,rgba(73,164,210,.19),transparent 33%),linear-gradient(135deg,#07131f,#08111a 62%)}.cc-loginbox{width:min(940px,96vw);padding:0!important;display:grid;grid-template-columns:1.15fr .85fr;overflow:hidden;border:1px solid rgba(134,174,202,.18)!important;border-radius:24px!important;background:#0b1723!important;box-shadow:0 35px 90px rgba(0,0,0,.32)}.cc-login-intro{padding:46px;display:flex;flex-direction:column;justify-content:space-between;min-height:520px;background:radial-gradient(circle at 10% 10%,rgba(105,213,255,.10),transparent 31%),linear-gradient(145deg,#0d2132,#0a1724)}.cc-login-brand{display:flex;align-items:center;gap:11px;font-size:13px;letter-spacing:.14em}.cc-login-brand span{width:38px;height:38px;border-radius:12px;display:grid;place-items:center;background:rgba(105,213,255,.10);border:1px solid rgba(105,213,255,.18);color:var(--cc-accent);font-weight:950}.cc-login-intro h1{font-size:42px;line-height:1.04;max-width:520px;margin:10px 0 14px;letter-spacing:-.045em}.cc-login-intro p{font-size:13px;line-height:1.7;color:#8ea5b7;max-width:500px}.cc-login-points{display:flex;gap:8px;flex-wrap:wrap}.cc-login-points span{border:1px solid #1c354b;background:rgba(7,19,31,.55);padding:8px 10px;border-radius:99px;color:#9db1c1;font-size:9px}.cc-login-form{padding:46px 40px;display:flex;flex-direction:column;justify-content:center}.cc-login-form h2{font-size:29px;margin:5px 0 4px}.cc-login-form .field{margin:10px 0}.cc-login-form .field input{padding:12px 13px}.cc-login-form .primary{margin-top:7px;display:flex;justify-content:space-between;align-items:center;padding:12px 14px}.cc-login-foot{margin-top:20px;color:#526a7d;font-size:9px;text-align:center}.cc-login-help{border:0;background:transparent;color:#79cfee;padding:9px 0 0;font-size:10px;font-weight:750;cursor:pointer;text-align:left}.cc-login-help:hover{text-decoration:underline}.cc-login-back{margin-top:11px;border:0;background:transparent;color:#7f98aa;font-size:10px;cursor:pointer;padding:0}.cc-login-note{margin-top:12px;padding:10px 11px;border-radius:11px;background:#0a1b29;border:1px solid #19354a;color:#8ea8ba;font-size:9px;line-height:1.5}
-.app{grid-template-columns:248px minmax(0,1fr)}.app>aside{padding:16px 12px;background:linear-gradient(180deg,rgba(6,15,24,.98),rgba(7,17,26,.99));border-right-color:rgba(114,155,184,.12)}.cc-brand{padding:5px 6px 17px;margin-bottom:10px}.cc-brandmark{width:36px;height:36px;border-radius:11px}.cc-brandcopy strong{font-size:13px}.cc-brandcopy span{font-size:9px}.cc-navgroup{margin:12px 0}.cc-navlabel{padding-left:10px;font-size:8px}.cc-nav button,.cc-advanced button{min-height:40px;padding:7px 9px!important;border-radius:11px!important;font-size:11px!important}.cc-nav button.active{background:linear-gradient(90deg,rgba(105,213,255,.14),rgba(105,213,255,.035))!important;box-shadow:inset 2px 0 0 var(--cc-accent)}.cc-navicon{width:26px;height:26px;flex-basis:26px;border-radius:8px}.cc-profile{border-radius:14px;padding:9px;box-shadow:0 -18px 38px rgba(4,10,16,.52)}
-main{padding:0 34px 70px;max-width:1640px}.cc-workspacebar{height:62px;margin-bottom:30px;border-bottom-color:rgba(154,181,202,.08);background:rgba(7,19,31,.82);backdrop-filter:blur(20px)}.cc-workspace-pill{background:rgba(105,213,255,.055);border-color:rgba(105,213,255,.18);color:#8dcce3}.cc-pagehead{margin-bottom:24px}.cc-pagehead h2{font-size:34px;line-height:1.08}.cc-pagehead .sub{font-size:11px;line-height:1.6}.btn{transition:transform .14s ease,border-color .14s ease,background .14s ease,box-shadow .14s ease}.btn:hover{transform:translateY(-1px);border-color:#31536d}.primary{background:linear-gradient(135deg,#73dcff,#7d9fff);box-shadow:0 7px 22px rgba(83,163,222,.13)}.primary:hover{box-shadow:0 10px 30px rgba(83,163,222,.20)}
-.cc-metrics{gap:10px;margin-bottom:14px}.cc-metric{min-height:88px;padding:14px 15px;border-radius:15px;background:linear-gradient(155deg,rgba(15,31,46,.93),rgba(9,22,34,.95));border-color:rgba(116,155,184,.13);box-shadow:0 8px 28px rgba(0,0,0,.08)}.cc-metric:hover{border-color:rgba(105,213,255,.20)}.cc-metricicon{width:35px;height:35px;flex-basis:35px;border-radius:10px}.cc-metric b{font-size:27px}.cc-metric span{font-size:8px}.cc-dashboardgrid{display:grid;grid-template-columns:minmax(0,1.8fr) minmax(280px,.62fr);gap:12px;align-items:start}.cc-panel{border-radius:16px;border-color:rgba(116,155,184,.13);background:linear-gradient(155deg,rgba(14,29,43,.96),rgba(9,22,34,.98));box-shadow:0 11px 38px rgba(0,0,0,.09)}.cc-panelhead{padding:15px 16px}.cc-panelhead h3{font-size:14px}.cc-table .row{padding:13px 16px;transition:background .12s ease}.cc-table .row.head{background:rgba(5,15,25,.45)}.cc-table .row.case:hover{background:rgba(105,213,255,.045)}
-.cc-prioritylist{display:grid;gap:7px}.cc-priorityitem{display:grid;grid-template-columns:8px minmax(0,1fr) auto;gap:10px;align-items:center;padding:9px 10px;border:1px solid rgba(116,155,184,.12);background:#091725;border-radius:11px;cursor:pointer;transition:.14s ease}.cc-priorityitem:hover{background:#0c1c2b;border-color:#28516e;transform:translateY(-1px)}.cc-priorityitem i{width:7px;height:7px;border-radius:50%;background:var(--cc-warn);box-shadow:0 0 0 4px rgba(255,211,110,.06)}.cc-priorityitem.review i{background:#7fc9ff}.cc-priorityitem b{display:block;font-size:9px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.cc-priorityitem small{display:block;color:#647c8f;font-size:8px;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.cc-priorityscore{font-size:9px;color:#91a8b9}.cc-priorityempty{padding:10px;border:1px dashed #20384e;border-radius:11px;color:#688195;font-size:9px}.cc-action{padding:9px;border-radius:11px}.cc-action:hover{transform:translateY(-1px)}
-.cc-casebar{display:grid;grid-template-columns:minmax(260px,1fr) 175px 185px auto;gap:8px;align-items:center;margin-bottom:8px}.cc-search{position:relative}.cc-search>span{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:#60798d;font-size:13px;pointer-events:none}.cc-search input,.cc-casebar select{width:100%;height:42px;border:1px solid #1a3449;border-radius:12px;background:#091725;color:#e9f3f9;padding:0 12px;font-size:10px}.cc-search input{padding-left:34px}.cc-search input::placeholder{color:#536d81}.cc-casebar select{cursor:pointer}.cc-clearfilters{height:42px}.cc-case-meta{min-height:20px;color:#637c8e;font-size:9px;padding:2px 2px 8px}.cc-casetable{margin-top:0}.cc-casetable .row.case{min-height:58px}.cc-casetable .row.case>div:first-child b{font-size:11px}.cc-casetable .sub{font-size:9px}.ws-score{display:flex;align-items:center;gap:8px}.ws-score>b{min-width:30px}.ws-scorebar{display:block;width:54px;height:4px;border-radius:99px;background:#1a3042;overflow:hidden}.ws-scorebar i{display:block;height:100%;background:linear-gradient(90deg,#5ec9ef,#77e0aa);border-radius:99px}.ws-action{color:#7190a4;font-size:9px;text-align:right}.ws-empty{padding:28px;text-align:center;color:#71889a}.ws-empty b{display:block;color:#d9e6ee;font-size:11px;margin-bottom:5px}.pill{border-color:#294057;background:#0c1a28;color:#93a8b9}.pill.good{color:#95e9bc;border-color:rgba(119,224,170,.25);background:rgba(119,224,170,.055)}.pill.warn{color:#ffe092;border-color:rgba(255,211,110,.25);background:rgba(255,211,110,.055)}.pill.review{color:#a7dfff;border-color:rgba(105,213,255,.24);background:rgba(105,213,255,.055)}
-.cc-intake-card h3,.cc-intake-preview h3{margin:5px 0 6px}.cc-inline-actions{display:flex;gap:7px;flex-wrap:wrap}.cc-flowstep{display:grid;grid-template-columns:30px 1fr;gap:10px;align-items:center;padding:10px 0;border-bottom:1px solid rgba(154,181,202,.08)}.cc-flowstep:last-child{border-bottom:0}.cc-flowstep i{width:30px;height:30px;border-radius:10px;display:grid;place-items:center;background:rgba(105,213,255,.075);border:1px solid rgba(105,213,255,.14);color:var(--cc-accent);font-style:normal;font-size:10px;font-weight:900}.cc-flowstep b{display:block;font-size:10px}.cc-flowstep small{display:block;color:#657d90;font-size:8px;margin-top:2px}
-.field input,.field textarea,.field select{transition:border-color .14s ease,background .14s ease,box-shadow .14s ease}.field input:hover,.field textarea:hover,.field select:hover{border-color:#294b65}.ws-toaststack{position:fixed;right:18px;bottom:18px;z-index:120;display:grid;gap:8px;pointer-events:none}.ws-toast{min-width:220px;max-width:360px;padding:11px 13px;border-radius:12px;background:#102335;border:1px solid #28445a;color:#eaf4fa;font-size:10px;box-shadow:0 18px 45px rgba(0,0,0,.26);transition:.25s ease}.ws-toast.good{border-color:rgba(119,224,170,.26)}.modal{backdrop-filter:blur(8px)}.modalbox{border-radius:20px;border-color:#24445c;box-shadow:0 35px 80px rgba(0,0,0,.34)}
-@media(max-width:1100px){.cc-dashboardgrid{grid-template-columns:1fr}.cc-casebar{grid-template-columns:1fr 1fr 1fr}.cc-search{grid-column:1/-1}.cc-clearfilters{width:100%}}
-@media(max-width:900px){.cc-loginbox{grid-template-columns:1fr;max-width:560px}.cc-login-intro{display:none}.cc-login-form{padding:34px 26px}.app>aside{padding:7px 9px}.cc-nav button{min-height:35px}main{padding:0 13px 55px}.cc-workspacebar{margin-bottom:19px}.cc-pagehead h2{font-size:28px}.cc-dashboardgrid{gap:10px}}
-@media(max-width:650px){.login{padding:12px}.cc-loginbox{width:100%;border-radius:18px!important}.cc-login-form{padding:28px 20px}.cc-casebar{grid-template-columns:1fr 1fr}.cc-search{grid-column:1/-1}.cc-casebar select{font-size:9px}.cc-clearfilters{grid-column:1/-1}.cc-workspacebar{position:relative;top:0}.cc-page{display:none}.cc-workspace{width:100%;justify-content:space-between}.cc-metric{min-height:76px}.cc-metric b{font-size:22px}.cc-sidepanel{grid-template-columns:1fr}.cc-inline-actions .btn{flex:1}}
-</style>
-<style>
-/* ===== Werkstuur 1.4 · Launch Ready ===== */
-.cc-nav button.hidden,.cc-navgroup.hidden,.cc-managecard.hidden{display:none!important}
-.cc-sidepanel{position:static!important;top:auto!important;height:auto!important;background:transparent!important;border:0!important;padding:0!important;overflow:visible!important}
-.cc-techdetails{border-top:1px solid rgba(116,155,184,.12);padding-top:10px}.cc-techdetails summary{cursor:pointer;color:#7e99ad;font-size:9px;font-weight:800;letter-spacing:.04em}.cc-techdetails[open] summary{margin-bottom:9px}.cc-nextpanel p{font-size:10px;line-height:1.6;color:#71889a;margin:7px 0 14px}.cc-hubgrid,.cc-managegrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:11px}.cc-hubcard,.cc-managecard{display:grid;grid-template-columns:40px minmax(0,1fr) 18px;gap:12px;align-items:center;text-align:left;border:1px solid rgba(116,155,184,.14);border-radius:15px;background:linear-gradient(155deg,rgba(14,29,43,.96),rgba(9,22,34,.98));color:#eaf3f8;padding:16px;cursor:pointer;min-height:102px;transition:.15s ease}.cc-hubcard:hover,.cc-managecard:hover{border-color:rgba(98,208,255,.35);transform:translateY(-1px);background:linear-gradient(155deg,rgba(17,36,53,.98),rgba(10,25,38,.98))}.cc-hubicon,.cc-managecard>span{width:40px;height:40px;border-radius:12px;display:grid;place-items:center;background:rgba(98,208,255,.07);border:1px solid rgba(98,208,255,.14);color:#79cde9;font-weight:900}.cc-hubcard b,.cc-managecard b{display:block;font-size:12px}.cc-hubcard small,.cc-managecard small{display:block;margin-top:5px;color:#71899b;font-size:9px;line-height:1.45}.cc-hubcard>i,.cc-managecard>i{font-style:normal;color:#617f94}.cc-pilot-context{display:flex;justify-content:space-between;align-items:center;gap:18px}.cc-pilot-context h3{margin:4px 0}.cc-pilot-context p{margin:0}.cc-casetable{min-height:0}.cc-casetable:has(.ws-empty){background:transparent;border-style:dashed}.cc-navgroup#platformNavGroup{margin-top:auto;padding-top:12px;border-top:1px solid var(--cc-line-soft)}
-@media(min-width:901px){.cc-nav{min-height:calc(100vh - 170px);display:flex!important;flex-direction:column}.cc-nav-main{margin-bottom:0}.cc-navgroup#platformNavGroup{margin-top:auto;margin-bottom:72px}}
-@media(max-width:1050px){.cc-hubgrid,.cc-managegrid{grid-template-columns:1fr 1fr}}
-@media(max-width:900px){body{padding-bottom:76px}.app>aside{position:fixed!important;left:0;right:0;bottom:0;top:auto;height:68px!important;z-index:80;border:0!important;border-top:1px solid #173047!important;background:rgba(5,13,22,.97)!important;backdrop-filter:blur(18px);padding:5px 7px!important;overflow:visible!important}.cc-brand,.cc-profile,.cc-navlabel{display:none!important}.cc-nav{height:58px;display:flex!important;overflow-x:auto;align-items:stretch;gap:3px;padding:0!important}.cc-navgroup{display:contents!important}.cc-nav button{flex:1 0 60px!important;min-width:60px!important;height:58px!important;padding:6px 5px!important;margin:0!important;display:flex!important;flex-direction:column!important;justify-content:center;gap:3px!important;text-align:center!important;border-radius:10px!important;font-size:8px!important}.cc-navicon{display:block!important;width:auto!important;height:auto!important;flex:0 0 auto!important;border:0!important;background:transparent!important;font-size:16px!important}.cc-nav button.active{box-shadow:inset 0 2px 0 var(--cc-accent)!important;background:rgba(98,208,255,.07)!important}.cc-nav button.cc-mobile-secondary{display:none!important}.cc-nav button[data-view="pilotHub"]>span:last-child{font-size:0}.cc-nav button[data-view="pilotHub"]>span:last-child:after{content:"Pilot";font-size:8px}.cc-workspacebar{margin-top:0}.cc-hubgrid,.cc-managegrid{grid-template-columns:1fr 1fr}.cc-dashboardgrid{grid-template-columns:1fr}.cc-sidepanel{grid-template-columns:1fr!important}}
-@media(max-width:600px){.cc-hubgrid,.cc-managegrid{grid-template-columns:1fr}.cc-hubcard,.cc-managecard{min-height:88px;padding:13px}.cc-pilot-context{align-items:flex-start;flex-direction:column}.cc-metrics{grid-template-columns:1fr 1fr!important}.cc-pagehead{align-items:flex-start}.cc-pagehead .btn{width:100%;margin-top:8px}}
-</style>
-</head><body>
-<div class="ws-toaststack" id="toastStack" aria-live="polite"></div>
-<div class="login" id="login"><div class="loginbox cc-loginbox">
-<div class="cc-login-intro"><div class="cc-login-brand"><span>W</span><b>WERKSTUUR</b></div><div><div class="eyebrow">Serviceproces</div><h1>Van melding naar een werkbare opdracht.</h1><p>Werkstuur bundelt intake, technische voorbereiding en opvolging in één rustige werkomgeving.</p></div><div class="cc-login-points"><span>✓ Completere intake</span><span>✓ Minder zoekwerk voor planning</span><span>✓ Duidelijke monteursbriefing</span></div></div>
+<link rel="stylesheet" href="/workspace-v200.css">
+<link rel="stylesheet" href="/analysis-ui-v201.css">
+<link rel="stylesheet" href="/refinements-v203.css">
+<link rel="stylesheet" href="/command-v210.css">
+</head><body><div class="ws-session-splash" id="sessionSplash" role="status"><svg class="ws-logo" viewBox="0 0 48 48" aria-hidden="true" focusable="false"><rect width="48" height="48" rx="12" fill="#62d0ff"/><path d="m10 13 7 22 7-15 7 15 7-22" fill="none" stroke="#071522" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"/></svg><span>Je werkomgeving wordt geladen…</span></div>
+<div class="ws-toaststack" id="toastStack" role="status" aria-live="polite" aria-atomic="false"></div>
+<div class="login hidden" id="login"><div class="loginbox cc-loginbox">
+<div class="cc-login-intro"><div class="cc-login-brand"><svg class="ws-logo" viewBox="0 0 48 48" aria-hidden="true" focusable="false"><rect width="48" height="48" rx="12" fill="#62d0ff"/><path d="m10 13 7 22 7-15 7 15 7-22" fill="none" stroke="#071522" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"/></svg><span>WERKSTUUR</span></div><div><div class="eyebrow">Intelligente serviceomgeving</div><h1>Meer grip.<br>Meer vooruit.</h1><p>Werkstuur bundelt intake, technische voorbereiding en opvolging in één rustige werkomgeving.</p></div><div class="cc-login-points"><span><svg class="ws-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"/><path d="m8 12 3 3 5-6"/></svg> Completere intake</span><span><svg class="ws-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"/><path d="m8 12 3 3 5-6"/></svg> Minder zoekwerk voor planning</span><span><svg class="ws-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"/><path d="m8 12 3 3 5-6"/></svg> Duidelijke monteursbriefing</span></div></div>
 <div class="cc-login-form">
-<div id="loginPanel"><div class="eyebrow">Werkstuur</div><h2>Inloggen</h2><div class="sub">Gebruik je Werkstuur-account om verder te gaan.</div><div class="field"><label>E-mail</label><input autocomplete="username" id="email" type="email" placeholder="naam@bedrijf.nl"/></div><div class="field"><label>Wachtwoord</label><input autocomplete="current-password" id="password" type="password" placeholder="••••••••••••"/></div><button class="btn primary full" onclick="loginNow()">Inloggen <span aria-hidden="true">→</span></button><button class="cc-login-help" onclick="showForgotPassword()" type="button">Wachtwoord vergeten?</button><div class="msg" id="loginMsg"></div><div class="cc-login-foot">Beveiligde Werkstuur-omgeving · <a href="https://werkstuur.nl" target="_blank" rel="noopener">werkstuur.nl</a></div></div>
-<div class="hidden" id="forgotPanel"><div class="eyebrow">Accounttoegang</div><h2>Wachtwoord herstellen</h2><div class="sub">Vul het e-mailadres van je Werkstuur-account in. Als het account bestaat, ontvang je een herstel-link.</div><div class="field"><label>E-mail</label><input autocomplete="email" id="forgotEmail" type="email" placeholder="naam@bedrijf.nl"/></div><button class="btn primary full" onclick="requestPasswordReset()">Herstel-link aanvragen <span aria-hidden="true">→</span></button><div class="msg" id="forgotMsg"></div><button class="cc-login-back" onclick="showLoginPanel()" type="button">← Terug naar inloggen</button></div>
-<div class="hidden" id="resetPanel"><div class="eyebrow">Accounttoegang</div><h2>Nieuw wachtwoord</h2><div class="sub">Kies een nieuw wachtwoord van minimaal 12 tekens.</div><div class="field"><label>Nieuw wachtwoord</label><input autocomplete="new-password" id="resetPassword" type="password" placeholder="min. 12 tekens"/></div><div class="field"><label>Herhaal wachtwoord</label><input autocomplete="new-password" id="resetPassword2" type="password" placeholder="nogmaals"/></div><button class="btn primary full" onclick="completePasswordReset()">Wachtwoord opslaan <span aria-hidden="true">→</span></button><div class="msg" id="resetMsg"></div><div class="cc-login-note">Herstel-links zijn tijdgebonden en worden ongeldig zodra het wachtwoord is gewijzigd.</div><button class="cc-login-back" onclick="showLoginPanel(true)" type="button">← Terug naar inloggen</button></div>
+<div id="loginPanel"><div class="eyebrow">Werkstuur</div><h2>Inloggen</h2><div class="sub">Gebruik je Werkstuur-account om verder te gaan.</div><div class="field"><label for="email">E-mail</label><input autocomplete="username" id="email" type="email" placeholder="naam@bedrijf.nl"/></div><div class="field"><label for="password">Wachtwoord</label><input autocomplete="current-password" id="password" type="password" placeholder="••••••••••••"/></div><button class="btn primary full" onclick="loginNow()">Inloggen <span aria-hidden="true">→</span></button><button class="cc-login-help" onclick="showForgotPassword()" type="button">Wachtwoord vergeten?</button><div class="msg" id="loginMsg" role="status" aria-live="polite"></div><div class="cc-login-foot"><svg class="ws-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m12 2 8 3v6c0 5-4 9-8 11-4-2-8-6-8-11V5zM8 11l3 3 5-6"/></svg>Beveiligde Werkstuur-omgeving · <a href="https://werkstuur.nl" target="_blank" rel="noopener">werkstuur.nl</a></div></div>
+<div class="hidden" id="forgotPanel"><div class="eyebrow">Accounttoegang</div><h2>Wachtwoord herstellen</h2><div class="sub">Vul het e-mailadres van je Werkstuur-account in. Als het account bestaat, ontvang je een herstel-link.</div><div class="field"><label for="forgotEmail">E-mail</label><input autocomplete="email" id="forgotEmail" type="email" placeholder="naam@bedrijf.nl"/></div><button class="btn primary full" onclick="requestPasswordReset()">Herstel-link aanvragen <span aria-hidden="true">→</span></button><div class="msg" id="forgotMsg" role="status" aria-live="polite"></div><button class="cc-login-back" onclick="showLoginPanel()" type="button">← Terug naar inloggen</button></div>
+<div class="hidden" id="resetPanel"><div class="eyebrow">Accounttoegang</div><h2>Nieuw wachtwoord</h2><div class="sub">Kies een nieuw wachtwoord van minimaal 12 tekens.</div><div class="field"><label for="resetPassword">Nieuw wachtwoord</label><input autocomplete="new-password" id="resetPassword" type="password" placeholder="min. 12 tekens"/></div><div class="field"><label for="resetPassword2">Herhaal wachtwoord</label><input autocomplete="new-password" id="resetPassword2" type="password" placeholder="nogmaals"/></div><button class="btn primary full" onclick="completePasswordReset()">Wachtwoord opslaan <span aria-hidden="true">→</span></button><div class="msg" id="resetMsg" role="status" aria-live="polite"></div><div class="cc-login-note">Herstel-links zijn tijdgebonden en worden ongeldig zodra het wachtwoord is gewijzigd.</div><button class="cc-login-back" onclick="showLoginPanel(true)" type="button">← Terug naar inloggen</button></div>
 </div>
 </div></div>
 <div class="app hidden" id="app"><aside><div class="cc-brand">
-<div class="cc-brandmark">W</div>
+<div class="cc-brandmark"><svg class="ws-logo" viewBox="0 0 48 48" aria-hidden="true" focusable="false"><rect width="48" height="48" rx="12" fill="#62d0ff"/><path d="m10 13 7 22 7-15 7 15 7-22" fill="none" stroke="#071522" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
 <div class="cc-brandcopy"><strong>WERKSTUUR</strong><span>Serviceomgeving</span></div>
-</div><nav class="cc-nav" aria-label="Hoofdnavigatie">
+</div><nav class="cc-nav" id="workspaceNav" aria-label="Hoofdnavigatie">
 <div class="cc-navgroup cc-nav-main"><div class="cc-navlabel">WERK</div>
-<button class="active" data-view="dashboard" id="dashboardNav"><span aria-hidden="true" class="cc-navicon">⌂</span><span>Overzicht</span></button>
-<button data-view="cases" id="casesNav"><span aria-hidden="true" class="cc-navicon">▦</span><span>Cases</span></button>
-<button data-view="workorders" id="workordersNav"><span aria-hidden="true" class="cc-navicon">↗</span><span>Mijn werk</span></button>
-<button data-view="pilotHub" id="pilotHubNav"><span aria-hidden="true" class="cc-navicon">◒</span><span>Pilot &amp; resultaten</span></button>
-<button data-view="settings" id="settingsNav"><span aria-hidden="true" class="cc-navicon">◇</span><span>Klantintake</span></button>
-<button data-view="team" id="teamNav"><span aria-hidden="true" class="cc-navicon">○</span><span>Team</span></button>
+<button class="active" data-view="dashboard" id="dashboardNav"><span aria-hidden="true" class="cc-navicon"><svg class="ws-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg></span><span>Overzicht</span></button>
+<button data-view="cases" id="casesNav"><span aria-hidden="true" class="cc-navicon"><svg class="ws-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M3 7a2 2 0 0 1 2-2h5l2 2h7a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M3 11h18"/></svg></span><span>Servicedossiers</span></button>
+<button data-view="workorders" id="workordersNav"><span aria-hidden="true" class="cc-navicon"><svg class="ws-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><rect x="4" y="6" width="16" height="15" rx="2"/><path d="M9 6V3h6v3M8 11h8M8 15h4M8 18h6"/></svg></span><span>Mijn werk</span></button>
+<button data-view="pilotHub" id="pilotHubNav"><span aria-hidden="true" class="cc-navicon"><svg class="ws-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 3v17h17M8 15v-4M13 15V7M18 15v-7"/></svg></span><span>Resultaten</span></button>
+<button data-view="settings" id="settingsNav"><span aria-hidden="true" class="cc-navicon"><svg class="ws-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M9 7h6M9 11h6M9 15h3M16 17l2 2 4-4"/></svg></span><span>Klantintake</span></button>
+<button data-view="customers" id="customersNav"><span class="cc-navicon" aria-hidden="true"><svg class="ws-icon" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3"/><path d="M3 21v-3a6 6 0 0 1 12 0v3M16 5a3 3 0 0 1 0 6M18 15a5 5 0 0 1 3 5"/></svg></span><span>Klanten</span></button>
+<button data-view="team" id="teamNav"><span aria-hidden="true" class="cc-navicon"><svg class="ws-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="9" cy="8" r="3"/><path d="M3 21v-3a6 6 0 0 1 12 0v3M16 5a3 3 0 0 1 0 6M18 15a5 5 0 0 1 3 5"/></svg></span><span>Team</span></button>
 </div>
 <div class="cc-navgroup" id="platformNavGroup"><div class="cc-navlabel">BEHEER</div>
-<button data-view="owner" id="ownerNav" class="cc-mobile-secondary"><span aria-hidden="true" class="cc-navicon">◆</span><span>Organisaties</span></button>
-<button data-view="beheer" id="beheerNav"><span aria-hidden="true" class="cc-navicon">⚙</span><span>Beheer</span></button>
+<button data-view="platform" id="platformNav" class="hidden"><span class="cc-navicon" aria-hidden="true"><svg class="ws-icon" viewBox="0 0 24 24"><path d="M3 12h4l3-8 4 16 3-8h4"/></svg></span><span>Softwarebeheer</span></button>
+<button data-view="owner" id="ownerNav" class="cc-mobile-secondary"><span aria-hidden="true" class="cc-navicon"><svg class="ws-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 7h2M14 7h2M8 11h2M14 11h2M8 15h2M14 15h2M10 21v-3h4v3"/></svg></span><span>Organisaties</span></button>
+<button data-view="support" id="supportNav"><span class="cc-navicon" aria-hidden="true"><svg class="ws-icon" viewBox="0 0 24 24"><path d="M4 3h16v14H8l-4 4zM8 7h8M8 11h5"/></svg></span><span>Ondersteuning</span></button>
+<button data-view="beheer" id="beheerNav"><span aria-hidden="true" class="cc-navicon"><svg class="ws-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m10 3-.6 2.4-2 .9-2.2-.7-2 3.4 1.6 1.8v2.4L3.2 15l2 3.4 2.2-.7 2 .9.6 2.4h4l.6-2.4 2-.9 2.2.7 2-3.4-1.6-1.8v-2.4l1.6-1.8-2-3.4-2.2.7-2-.9L14 3z"/><circle cx="12" cy="12" r="3"/></svg></span><span>Beheer</span></button>
 </div>
 </nav>
 <div class="cc-profile">
 <div class="cc-avatar" id="userInitials">MO</div>
 <div class="cc-profilecopy">
-<strong id="userDisplay">Manuel</strong>
+<strong id="userDisplay">—</strong>
 <span id="who"></span>
 </div>
-<button class="cc-logout" onclick="logoutNow()" title="Uitloggen" type="button">↪</button>
+<button class="cc-logout" onclick="logoutNow()" aria-label="Uitloggen" title="Uitloggen" type="button"><svg class="ws-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M10 4H5a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h5M9 12h12m-4-4 4 4-4 4"/></svg></button>
 </div>
-</aside><main>
-<div class="cc-workspacebar">
-<div class="cc-workspace">
-<span class="cc-workspace-label">Actieve omgeving</span>
-<strong id="workspaceName">—</strong>
-<span class="cc-workspace-pill" id="workspacePlan">—</span>
-</div>
-<div class="cc-page">
-<span id="pageLabel">Overzicht</span>
-<span class="cc-live"><i></i> Werkstuur online</span>
-</div>
-</div>
-
+</aside><button class="ws-nav-backdrop" type="button" aria-label="Menu sluiten" onclick="closeNavigation()"></button><main>
+<header class="cc-workspacebar">
+<button class="ws-mobile-toggle" type="button" id="workspaceMenuToggle" aria-label="Menu openen" aria-expanded="false" aria-controls="workspaceNav" onclick="toggleNavigation()"><svg class="ws-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button>
+<div class="cc-workspace"><span class="ws-workspace-icon"><svg class="ws-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 7h2M14 7h2M8 11h2M14 11h2M8 15h2M14 15h2M10 21v-3h4v3"/></svg></span><div class="ws-workspace-copy"><span class="cc-workspace-label">ACTIEVE WERKOMGEVING</span><strong id="workspaceName">—</strong></div><span class="cc-workspace-pill" id="workspacePlan">—</span><button class="cc-textbtn hidden" id="workspaceSwitch" type="button" onclick="show('owner')" aria-label="Andere organisatie openen"><svg class="ws-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M14 3h7v7M21 3l-10 10M10 5H5a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-5"/></svg></button></div>
+<div class="ws-workspace-actions"><label class="ws-global-search" for="globalSearch"><svg class="ws-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 5 5"/></svg><input id="globalSearch" type="search" placeholder="Zoek een dossier…" aria-label="Zoek servicedossiers" oninput="syncGlobalSearch(this.value)"><kbd>⌘ K</kbd></label><button class="ws-mobile-search ws-iconbutton" type="button" aria-label="Zoek servicedossiers" onclick="openWorkspaceSearch()"><svg class="ws-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 5 5"/></svg></button><div class="cc-page"><span id="pageLabel">Overzicht</span><span class="cc-live" id="connectionStatus"><i></i><span id="connectionLabel">Verbonden</span></span></div></div>
+</header><div class="ws-breadcrumb"><span>Werkstuur</span><svg class="ws-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 12h16m-6-6 6 6-6 6"/></svg><strong id="breadcrumbLabel">Overzicht</strong></div>
+<div class="ws-context-banner hidden" id="ownerContextBanner"><svg class="ws-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg><div>Je bekijkt deze organisatie als Werkstuur-eigenaar. Het teamaccount van deze organisatie werkt de dossiers bij.</div><button class="cc-textbtn" type="button" onclick="show('owner')">Andere omgeving</button></div>
 <section class="hidden" id="onboardingView">
-<div class="top"><div><div class="eyebrow">Launch Partner Setup</div><h2>Onboarding-wizard</h2><div class="sub">Configureer een installatiebedrijf en start de pilot vanuit één scherm.</div></div></div>
+<div class="top"><div><div class="eyebrow">Je werkomgeving</div><h2>Startinstellingen</h2><div class="sub">Maak je eigen omgeving of een klantomgeving klaar voor het dagelijkse werk.</div></div></div>
 <div class="card section">
 <div class="eyebrow">Stap <span id="obStepNo">1</span> van 5</div>
 <div id="obStep1">
 <h3>1. Bedrijf &amp; servicefocus</h3>
-<div class="field"><label>Bedrijfsnaam</label><input autocomplete="organization" id="obCompany" placeholder="Bedrijfsnaam pilotklant"/></div><div class="field"><label>Support e-mail</label><input id="obSupportEmail" placeholder="service@bedrijf.nl" type="email"/></div><div class="field"><label>Privacyverklaring URL</label><input id="obPrivacyUrl" placeholder="https://bedrijf.nl/privacy" type="url"/></div>
-<div class="field"><label>Servicetypen in de pilot</label>
+<div class="field"><label>Bedrijfsnaam</label><input autocomplete="organization" id="obCompany" placeholder="Naam van je bedrijf of klant"/></div><div class="field"><label for="obSupportEmail">Support e-mail</label><input id="obSupportEmail" placeholder="service@bedrijf.nl" type="email"/></div><div class="field"><label for="obPrivacyUrl">Privacyverklaring URL</label><input id="obPrivacyUrl" placeholder="https://bedrijf.nl/privacy" type="url"/></div>
+<div class="field"><label for="obPlannerName">Servicetypen in deze omgeving</label>
 <label><input checked="" class="obService" type="checkbox" value="Laadpaal"/> Laadpaal</label><br/>
 <label><input checked="" class="obService" type="checkbox" value="Zonnepanelen"/> Zonnepanelen</label><br/>
 <label><input class="obService" type="checkbox" value="Thuisbatterij"/> Thuisbatterij</label><br/>
@@ -201,7 +76,7 @@ main{padding:0 34px 70px;max-width:1640px}.cc-workspacebar{height:62px;margin-bo
 </div>
 <div class="hidden" id="obStep2">
 <h3>2. Merken</h3>
-<div class="sub">Selecteer waar de pilot op focust. De klantintake gebruikt daarna alleen deze keuzes.</div>
+<div class="sub">Selecteer de merken die je team ondersteunt. Deze keuzes verschijnen in de klantintake.</div>
 <div class="section" id="obBrands"></div>
 </div>
 <div class="hidden" id="obStep3">
@@ -211,51 +86,58 @@ main{padding:0 34px 70px;max-width:1640px}.cc-workspacebar{height:62px;margin-bo
 <div class="card">
 <h3>Planner</h3>
 <div class="field"><label>Naam</label><input id="obPlannerName" placeholder="bijv. Lisa"/></div>
-<div class="field"><label>E-mail</label><input id="obPlannerEmail" type="email"/></div>
-<div class="field"><label>Tijdelijk wachtwoord</label><input id="obPlannerPassword" placeholder="min. 12 tekens" type="password"/></div>
+<div class="field"><label for="obPlannerEmail">E-mail</label><input id="obPlannerEmail" type="email"/></div>
+<div class="field"><label for="obPlannerPassword">Tijdelijk wachtwoord</label><input id="obPlannerPassword" placeholder="min. 12 tekens" type="password"/></div>
 </div>
 <div class="card">
 <h3>Monteur</h3>
-<div class="field"><label>Naam</label><input id="obTechName" placeholder="bijv. Mark"/></div>
-<div class="field"><label>E-mail</label><input id="obTechEmail" type="email"/></div>
-<div class="field"><label>Tijdelijk wachtwoord</label><input id="obTechPassword" placeholder="min. 12 tekens" type="password"/></div>
+<div class="field"><label for="obTechName">Naam</label><input id="obTechName" placeholder="bijv. Mark"/></div>
+<div class="field"><label for="obTechEmail">E-mail</label><input id="obTechEmail" type="email"/></div>
+<div class="field"><label for="obTechPassword">Tijdelijk wachtwoord</label><input id="obTechPassword" placeholder="min. 12 tekens" type="password"/></div>
 </div>
 </div>
 </div>
 <div class="hidden" id="obStep4">
-<h3>4. Businesscase-aannames</h3>
+<h3>4. Aannames voor de berekening</h3>
+<p class="sub">Deze bedragen en aantallen worden gebruikt om resultaten te berekenen. Ze starten geen abonnement of betaling.</p>
 <div class="grid2">
 <div>
-<div class="field"><label>Baseline planner-/intaketijd per case (min)</label><input id="obBaselinePlanner" type="number" value="13"/></div>
-<div class="field"><label>Planner kostwaarde (€ / uur)</label><input id="obPlannerRate" type="number" value="40"/></div>
-<div class="field"><label>Monteur kostwaarde (€ / uur)</label><input id="obTechRate" type="number" value="55"/></div>
-<div class="field"><label>Gemiddeld locatiebezoek (min)</label><input id="obVisitMinutes" type="number" value="90"/></div>
+<div class="field"><label for="obBaselinePlanner">Baseline planner-/intaketijd per case (min)</label><input id="obBaselinePlanner" type="number" value="13"/></div>
+<div class="field"><label for="obPlannerRate">Planner kostwaarde (€ / uur)</label><input id="obPlannerRate" type="number" value="40"/></div>
+<div class="field"><label for="obTechRate">Monteur kostwaarde (€ / uur)</label><input id="obTechRate" type="number" value="55"/></div>
+<div class="field"><label for="obVisitMinutes">Gemiddeld locatiebezoek (min)</label><input id="obVisitMinutes" type="number" value="90"/></div>
 </div>
 <div>
-<div class="field"><label>Gemiddelde retourkilometers</label><input id="obKm" type="number" value="35"/></div>
-<div class="field"><label>Kostprijs per km (€)</label><input id="obKmCost" step="0.01" type="number" value="0.35"/></div>
-<div class="field"><label>Referentie softwareprijs (€ / maand)</label><input id="obSoftware" type="number" value="299"/></div>
-<div class="field"><label>Cases per maand</label><input id="obVolume" type="number" value="150"/></div>
+<div class="field"><label for="obKm">Gemiddelde retourkilometers</label><input id="obKm" type="number" value="35"/></div>
+<div class="field"><label for="obKmCost">Kostprijs per km (€)</label><input id="obKmCost" step="0.01" type="number" value="0.35"/></div>
+<div class="field"><label for="obSoftware">Softwarekosten voor berekening (€ / maand)</label><input id="obSoftware" type="number" value="299"/></div>
+<div class="field"><label for="obVolume">Cases per maand</label><input id="obVolume" type="number" value="150"/></div>
 </div>
 </div>
 </div>
 <div class="hidden" id="obStep5">
-<h3>5. Nulmeting &amp; pilotdoelen</h3>
+<h3>5. Klaar om te starten</h3>
+<p class="sub">Sla je startinstellingen op. Een meetpilot kun je ook later instellen bij Resultaten.</p>
+<label class="section" for="obPilotName"><input id="obCreatePilot" type="checkbox" onchange="toggleOnboardingPilot()"/> Ook een meetpilot starten</label>
+<div class="hidden section" id="obPilotFields">
+<h3>Nulmeting &amp; pilotdoelen</h3>
+<p class="sub">Controleer de beginwaarden en doelen voor je meetperiode voordat je de pilot start.</p>
 <div class="grid2">
 <div>
 <div class="field"><label>Pilotnaam</label><input id="obPilotName" value="Launch Partner Pilot"/></div>
-<div class="field"><label>Startdatum</label><input id="obStart" type="date"/></div>
-<div class="field"><label>Einddatum</label><input id="obEnd" type="date"/></div>
-<div class="field"><label>Nulmeting first-time-fix (%)</label><input id="obBaseFTF" type="number" value="70"/></div>
-<div class="field"><label>Nulmeting tweede bezoek (%)</label><input id="obBaseSecond" type="number" value="20"/></div>
-<div class="field"><label>Nulmeting remote opgelost (%)</label><input id="obBaseRemote" type="number" value="5"/></div>
+<div class="field"><label for="obStart">Startdatum</label><input id="obStart" type="date"/></div>
+<div class="field"><label for="obEnd">Einddatum</label><input id="obEnd" type="date"/></div>
+<div class="field"><label for="obBaseFTF">Nulmeting first-time-fix (%)</label><input id="obBaseFTF" type="number" value="70"/></div>
+<div class="field"><label for="obBaseSecond">Nulmeting tweede bezoek (%)</label><input id="obBaseSecond" type="number" value="20"/></div>
+<div class="field"><label for="obBaseRemote">Nulmeting remote opgelost (%)</label><input id="obBaseRemote" type="number" value="5"/></div>
 </div>
 <div>
-<div class="field"><label>Doel planner-/voorbereidingstijd (min)</label><input id="obTargetPlanner" type="number" value="7"/></div>
-<div class="field"><label>Doel first-time-fix (%)</label><input id="obTargetFTF" type="number" value="80"/></div>
-<div class="field"><label>Doel tweede bezoek (%)</label><input id="obTargetSecond" type="number" value="12"/></div>
-<div class="field"><label>Doel remote opgelost (%)</label><input id="obTargetRemote" type="number" value="10"/></div>
-<div class="field"><label>Scope/notitie</label><textarea id="obPilotNotes">6-weekse pilot met technische servicecases.</textarea></div>
+<div class="field"><label for="obTargetPlanner">Doel planner-/voorbereidingstijd (min)</label><input id="obTargetPlanner" type="number" value="7"/></div>
+<div class="field"><label for="obTargetFTF">Doel first-time-fix (%)</label><input id="obTargetFTF" type="number" value="80"/></div>
+<div class="field"><label for="obTargetSecond">Doel tweede bezoek (%)</label><input id="obTargetSecond" type="number" value="12"/></div>
+<div class="field"><label for="obTargetRemote">Doel remote opgelost (%)</label><input id="obTargetRemote" type="number" value="10"/></div>
+<div class="field"><label for="obPilotNotes">Scope/notitie</label><textarea id="obPilotNotes">6-weekse pilot met technische servicecases.</textarea></div>
+</div>
 </div>
 </div>
 </div>
@@ -266,38 +148,45 @@ main{padding:0 34px 70px;max-width:1640px}.cc-workspacebar{height:62px;margin-bo
 </div>
 </div>
 </section>
-<section id="dashboardView">
+<section id="platformView" class="hidden">
+<div class="cmd-hero"><div class="cmd-hero-copy"><span class="cmd-status-chip"><i></i> WERKSTUUR CONTROL</span><h2>Je software.<br><span>Onder controle.</span></h2><p>Je klantbedrijven werken zelfstandig. Jij houdt overzicht en helpt wanneer het nodig is.</p><div class="cc-inline-actions"><button class="btn primary" type="button" onclick="show('owner')">Klantbedrijven beheren <span aria-hidden="true">↗</span></button><button class="btn" type="button" onclick="show('system')">Systeemstatus</button></div></div>
+<div class="cmd-orbit" aria-hidden="true"><div class="cmd-orbit-ring r1"></div><div class="cmd-orbit-ring r2"></div><div class="cmd-orbit-ring r3"></div><div class="cmd-orbit-core"><svg viewBox="0 0 48 48"><path d="m10 13 7 22 7-15 7 15 7-22" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div><span class="cmd-orbit-node n1"></span><span class="cmd-orbit-node n2"></span><span class="cmd-orbit-node n3"></span><div class="cmd-orbit-caption">CONNECTED WORKSPACES</div></div></div>
+<div class="cmd-stats"><article class="cmd-stat"><span>Klantomgevingen</span><b id="platformClients">—</b><small>eigen omgeving per bedrijf</small></article><article class="cmd-stat"><span>Actieve bedrijven</span><b id="platformActive">—</b><small>actief of in pilot</small></article><article class="cmd-stat"><span>Actieve teamleden</span><b id="platformUsers">—</b><small>binnen klantomgevingen</small></article><article class="cmd-stat"><span>Open supportmeldingen</span><b id="platformSetup">—</b><small>vragen voor de software-eigenaar</small></article></div>
+<div class="cmd-platform-grid section"><div class="cc-panel"><div class="cc-panelhead"><div><span class="cc-kicker">WORKSPACES</span><h3>Jouw klantbedrijven</h3></div><button class="cc-textbtn" type="button" onclick="show('owner')">Alle bedrijven ↗</button></div><div id="platformCompanies" class="cmd-company-list"></div></div><div class="cc-panel cmd-monitor"><div class="cc-panelhead"><div><span class="cc-kicker">LIVE CONTROLE</span><h3>Softwarestatus</h3></div><button class="ws-iconbutton" type="button" onclick="loadPlatform()" aria-label="Softwarestatus vernieuwen">↻</button></div><div id="platformHealth" aria-live="polite"><p class="sub">Status wordt opgehaald…</p></div><div class="cmd-monitor-note">Dit overzicht controleert de service wanneer je het opent. Bij een melding zie je waar aandacht nodig is.</div></div></div>
+<div class="cmd-flow section"><div><span class="cc-kicker">ZO WERKT WERKSTUUR</span><h3>Een eigen werkproces voor ieder bedrijf.</h3></div><div class="cmd-flow-steps"><span><i>01</i>Klantintake</span><span><i>02</i>Slimme voorbereiding</span><span><i>03</i>Planner beslist</span><span><i>04</i>Monteur voert uit</span></div></div>
+</section>
+<section id="dashboardView"><div class="ws-context-banner ws-setup-banner hidden" id="setupBanner"><svg class="ws-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7h.01"/></svg><div>Maak de startinstellingen compleet om je werkomgeving voor de eerste pilot klaar te zetten.</div><button class="cc-textbtn" type="button" onclick="openOnboardingFromManage()">Startinstellingen</button></div>
 <div class="cc-pagehead">
 <div>
 <div class="eyebrow">Werkstuur</div>
 <h2 id="dashboardGreeting">Goedemiddag</h2>
 <div class="sub">Dit is wat nu aandacht nodig heeft in de actieve omgeving.</div>
 </div>
-<button class="btn primary" id="newBtn" onclick="openNew()">+ Nieuwe case</button>
+<button class="btn primary" id="newBtn" type="button" onclick="openNew()"><svg class="ws-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 4v16M4 12h16"/></svg> Nieuw dossier</button>
 </div>
 <div class="cc-metrics">
 <div class="cc-metric">
-<div class="cc-metricicon">▦</div>
-<div><small>Cases totaal</small><b id="mCases">0</b><span>in deze omgeving</span></div>
+<div class="cc-metricicon"><svg class="ws-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M3 7a2 2 0 0 1 2-2h5l2 2h7a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M3 11h18"/></svg></div>
+<div><small>Dossiers totaal</small><b id="mCases">0</b><span>in deze omgeving</span></div>
 </div>
 <div class="cc-metric attention">
-<div class="cc-metricicon">!</div>
-<div><small>Aandacht nodig</small><b id="mReview">0</b><span>review of info ontbreekt</span></div>
+<div class="cc-metricicon"><svg class="ws-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m12 3 10 17H2zM12 9v4M12 17h.01"/></svg></div>
+<div><small>Aandacht nodig</small><b id="mReview">0</b><span>review of onvolledige voorbereiding</span></div>
 </div>
 <div class="cc-metric">
-<div class="cc-metricicon">↗</div>
+<div class="cc-metricicon"><svg class="ws-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"/><path d="M12 6v6l4 2"/></svg></div>
 <div><small>Ingepland</small><b id="mScheduled">0</b><span>klaar voor uitvoering</span></div>
 </div>
 <div class="cc-metric readiness">
-<div class="cc-metricicon">◒</div>
-<div><small>Gem. gereedheid</small><b id="mReady">0%</b><span>kwaliteit voorbereiding</span></div>
+<div class="cc-metricicon"><svg class="ws-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"/><path d="m8 12 3 3 5-6"/></svg></div>
+<div><small>Gem. gereedheid</small><b id="mReady">0%</b><span>volledigheid voorbereiding</span></div>
 </div>
 </div>
 <div class="cc-dashboardgrid">
 <div class="cc-panel cc-mainpanel">
 <div class="cc-panelhead">
-<div><span class="cc-kicker">RECENTE CASES</span><h3>Operationeel overzicht</h3></div>
-<button class="cc-textbtn" onclick="show('cases')">Alle cases →</button>
+<div><span class="cc-kicker">RECENTE DOSSIERS</span><h3>De laatste meldingen</h3></div>
+<button class="cc-textbtn" onclick="show('cases')">Alle dossiers <svg class="ws-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 12h16m-6-6 6 6-6 6"/></svg></button>
 </div>
 <div class="table cc-table" id="dashTable"></div>
 </div>
@@ -308,65 +197,74 @@ main{padding:0 34px 70px;max-width:1640px}.cc-workspacebar{height:62px;margin-bo
 </div>
 <div class="cc-panel cc-nextpanel">
 <span class="cc-kicker">VOLGENDE STAP</span>
-<h3>Werk vanuit de case</h3>
-<p>Open een case om ontbrekende informatie, voorbereiding, toewijzing en uitkomst op één plek af te handelen.</p>
-<button class="btn full" onclick="show('cases')">Naar cases →</button>
+<h3>Werk vanuit het dossier</h3>
+<p>Open een dossier om ontbrekende informatie, voorbereiding, toewijzing en uitkomst op één plek af te handelen.</p>
+<button class="btn full" onclick="show('cases')">Naar servicedossiers <svg class="ws-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 12h16m-6-6 6 6-6 6"/></svg></button>
 </div>
 </aside>
 </div>
 </section>
-<section class="hidden" id="casesView"><div class="cc-pagehead"><div><div class="eyebrow">Operationeel</div><h2>Cases</h2><div class="sub">Vind direct wat aandacht nodig heeft en open het volledige dossier.</div></div><button class="btn primary" id="newBtn2" onclick="openNew()">+ Nieuwe case</button></div>
+<section class="hidden" id="casesView"><div class="cc-pagehead"><div><div class="eyebrow">Operationeel</div><h2>Servicedossiers</h2><div class="sub">Elke melding, voorbereiding en vervolgstap op één plek.</div></div><button class="btn primary" id="newBtn2" type="button" onclick="openNew()"><svg class="ws-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 4v16M4 12h16"/></svg> Nieuw dossier</button></div>
 <div class="cc-casebar">
-<div class="cc-search"><span aria-hidden="true">⌕</span><input id="caseSearch" type="search" placeholder="Zoek op klant, case, plaats, asset of klacht…" oninput="renderCasesView()"/></div>
+<div class="cc-search"><span aria-hidden="true"><svg class="ws-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 5 5"/></svg></span><input id="caseSearch" type="search" placeholder="Klant, dossiernummer, plaats of klacht…" aria-label="Zoek servicedossiers" oninput="renderCasesView();syncSearchFields()"/></div>
 <select id="caseStatusFilter" aria-label="Filter op status" onchange="renderCasesView()"><option value="all">Alle statussen</option><option value="attention">Vraagt aandacht</option><option value="Info ontbreekt">Info ontbreekt</option><option value="Review">Review</option><option value="Ingepland">Ingepland</option><option value="Afgerond">Afgerond</option></select>
 <select id="caseSort" aria-label="Sorteer cases" onchange="renderCasesView()"><option value="priority">Prioriteit</option><option value="recent">Nieuwste eerst</option><option value="readinessAsc">Gereedheid laag → hoog</option><option value="readinessDesc">Gereedheid hoog → laag</option></select>
 <button class="btn cc-clearfilters" type="button" onclick="clearCaseFilters()">Reset</button>
 </div>
 <div class="cc-case-meta" id="caseResultsMeta"></div>
 <div class="card table cc-casetable" id="casesTable"></div></section>
-<section class="hidden" id="workordersView"><div class="top"><div><div class="eyebrow">Mijn werk</div><h2>Werkorders</h2><div class="sub">Jouw toegewezen opdrachten en voorbereiding voor vertrek.</div></div></div><div id="workorders"></div></section>
-<section class="hidden" id="caseView"><div class="top"><button class="btn" onclick="show('cases')">← Terug</button><button class="btn primary" id="saveBtn" onclick="saveCase()">Opslaan</button></div><div class="grid2 section"><div><div class="card" id="caseMain"></div><div class="card section"><h3>Voor vertrek</h3><div id="prep"></div></div><div class="card section"><h3>Notities</h3><div id="notes"></div><div class="field"><textarea id="noteText" placeholder="Interne notitie..."></textarea></div><button class="btn" onclick="addNote()">Notitie toevoegen</button></div><div class="card section"><h3>Bijlagen</h3><div id="attachments"></div><div class="field"><input accept="image/*,.pdf" id="fileInput" type="file"/></div><button class="btn" onclick="uploadFile()">Upload</button></div><div class="card section"><h3>First-time-fix outcome</h3><div class="sub" id="outcomeCurrent"></div><div class="field"><label><input id="oResolved" type="checkbox"/> In één locatiebezoek opgelost</label></div><div class="field"><label><input id="oRemote" type="checkbox"/> Volledig remote opgelost</label></div><div class="field"><label><input id="oSecond" type="checkbox"/> Tweede bezoek nodig</label></div><div class="field"><label>Welke informatie ontbrak vooraf?</label><input id="oMissingInfo" placeholder="bijv. foutcode of installatietekening"/></div><div class="field"><label>Welk materiaal/onderdeel ontbrak?</label><input id="oMissingMaterial" placeholder="alleen indien van toepassing"/></div><div class="field"><label><input id="oWrongSkill" type="checkbox"/> Verkeerde expertise/monteur ingepland</label></div><div class="field"><label><input id="oPreventable" type="checkbox"/> Tweede rit waarschijnlijk voorkombaar met betere voorbereiding</label></div><div class="field"><label>Werkelijke planner-/voorbereidingstijd voor deze case (minuten)</label><input id="oPlannerMinutes" min="0" placeholder="bijv. 5" step="0.5" type="number"/></div><div class="field"><label>Korte evaluatie</label><textarea id="oNotes"></textarea></div><button class="btn primary" onclick="saveOutcome()">Outcome opslaan</button></div></div><div><div class="card" id="caseSide"></div><div class="card section"><h3>Toewijzing</h3><div class="field"><select id="assignedTo"></select></div><button class="btn" id="assignBtn" onclick="assignCase()">Toewijzen</button></div></div></div></section>
+<section class="hidden" id="workordersView"><div class="cc-pagehead"><div><div class="eyebrow">Jouw servicewerk</div><h2>Mijn opdrachten</h2><div class="sub">Je toegewezen werk, met alle voorbereiding binnen handbereik.</div></div><button class="btn" type="button" onclick="refreshWorkorders()"><svg class="ws-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M20 8V3l-3 3a8 8 0 0 0-13 5M4 16v5l3-3a8 8 0 0 0 13-5M20 3h-5M4 21h5"/></svg>Vernieuwen</button></div><div class="ws-work-summary"><div class="ws-work-chip">Open<b id="woOpen">—</b></div><div class="ws-work-chip">Ingepland<b id="woPlanned">—</b></div><div class="ws-work-chip">Afgerond<b id="woDone">—</b></div></div><div class="cc-search ws-workbar"><svg class="ws-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 5 5"/></svg><input id="workorderSearch" type="search" aria-label="Zoek mijn opdrachten" placeholder="Zoek klant, plaats of dossier…" oninput="renderWorkorders();syncSearchFields()"></div><div class="ws-worklist" id="workorders"></div></section>
+<section class="hidden" id="caseView">
+<div class="ws-case-top"><button class="btn btn-quiet" type="button" id="caseBack" onclick="backFromCase()"><svg class="ws-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M20 12H4m6-6-6 6 6 6"/></svg>Terug naar dossiers</button><button class="btn primary case-write" type="button" id="saveBtn" onclick="saveCase()"><svg class="ws-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m5 12 4 4L19 6"/></svg>Status opslaan</button><span class="ws-draft-state" id="wsDraftState" role="status" aria-live="polite">Alles opgeslagen</span></div>
+<div id="caseHero" class="ws-case-hero"></div>
+<div class="ws-case-layout"><div><nav class="ws-case-tabs" role="tablist" aria-label="Onderdeel van servicedossier"><button type="button" role="tab" class="active" id="caseTab-dossier" aria-controls="casePane-dossier" aria-selected="true" data-case-tab="dossier" onclick="selectCaseTab('dossier')"><svg class="ws-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M3 7a2 2 0 0 1 2-2h5l2 2h7a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M3 11h18"/></svg>Dossier</button><button type="button" role="tab" id="caseTab-prep" aria-controls="casePane-prep" aria-selected="false" tabindex="-1" data-case-tab="prep" onclick="selectCaseTab('prep')"><svg class="ws-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><rect x="4" y="6" width="16" height="15" rx="2"/><path d="M9 6V3h6v3M8 11h8M8 15h4M8 18h6"/></svg>Voorbereiding</button><button type="button" role="tab" id="caseTab-notes" aria-controls="casePane-notes" aria-selected="false" tabindex="-1" data-case-tab="notes" onclick="selectCaseTab('notes')"><svg class="ws-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 3h16a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H8l-5 4V4a1 1 0 0 1 1-1zM7 7h10M7 11h7"/></svg>Notities</button><button type="button" role="tab" id="caseTab-files" aria-controls="casePane-files" aria-selected="false" tabindex="-1" data-case-tab="files" onclick="selectCaseTab('files')"><svg class="ws-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8zM14 2v6h6M8 12h8M8 16h5"/></svg>Bijlagen</button><button type="button" role="tab" id="caseTab-outcome" aria-controls="casePane-outcome" aria-selected="false" tabindex="-1" data-case-tab="outcome" onclick="selectCaseTab('outcome')"><svg class="ws-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"/><path d="m8 12 3 3 5-6"/></svg>Uitkomst</button></nav>
+<div class="ws-case-pane" role="tabpanel" id="casePane-dossier" aria-labelledby="caseTab-dossier"><div class="card" id="caseMain"></div></div>
+<div class="ws-case-pane hidden" role="tabpanel" id="casePane-prep" aria-labelledby="caseTab-prep"><div class="card"><h3>Goed voorbereid op pad</h3><div class="sub">Aandachtspunten vóór vertrek. Jullie vakbekwame team beoordeelt wat passend en veilig is.</div><div id="prep"></div></div></div>
+<div class="ws-case-pane hidden" role="tabpanel" id="casePane-notes" aria-labelledby="caseTab-notes"><div class="card"><h3>Notities &amp; overdracht</h3><div id="notes"></div><div class="case-write"><div class="field"><label for="noteText">Nieuwe interne notitie</label><textarea id="noteText" placeholder="Deel relevante context met je team…" maxlength="5000"></textarea></div><button class="btn primary" type="button" onclick="addNote()"><svg class="ws-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 4v16M4 12h16"/></svg>Notitie toevoegen</button></div></div></div>
+<div class="ws-case-pane hidden" role="tabpanel" id="casePane-files" aria-labelledby="caseTab-files"><div class="card"><h3>Foto's &amp; bijlagen</h3><div id="attachments"></div><div class="case-write"><div class="field"><label for="fileInput">Een bestand toevoegen</label><input accept="image/*,.pdf" id="fileInput" type="file"><div class="ws-form-help">Afbeelding of PDF, maximaal 5 MB.</div></div><button class="btn primary" type="button" onclick="uploadFile()"><svg class="ws-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 16V4m-5 5 5-5 5 5M4 16v4a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-4"/></svg>Bijlage uploaden</button></div></div></div>
+<div class="ws-case-pane hidden" role="tabpanel" id="casePane-outcome" aria-labelledby="caseTab-outcome"><div class="card"><h3>Uitkomst van de service</h3><div class="sub" id="outcomeCurrent"></div><div class="ws-case-note"><svg class="ws-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7h.01"/></svg>Vul dit na de service in. Met deze terugkoppeling krijgt jullie team inzicht in voorbereiding en vervolgbezoeken.</div><div class="field"><label for="oMissingInfo"><input id="oResolved" type="checkbox">In één locatiebezoek opgelost</label></div><div class="field"><label><input id="oRemote" type="checkbox">Op afstand opgelost</label></div><div class="field"><label><input id="oSecond" type="checkbox">Een tweede bezoek nodig</label></div><div class="field"><label>Welke informatie ontbrak vooraf?</label><input id="oMissingInfo" placeholder="Bijvoorbeeld een foutcode of installatietekening"></div><div class="field"><label for="oMissingMaterial">Welk materiaal of onderdeel ontbrak?</label><input id="oMissingMaterial" placeholder="Alleen indien van toepassing"></div><div class="field"><label for="oPlannerMinutes"><input id="oWrongSkill" type="checkbox">Een andere expertise of monteur was nodig</label></div><div class="field"><label><input id="oPreventable" type="checkbox">Een tweede rit was mogelijk te voorkomen</label></div><div class="field"><label>Werkelijke voorbereidingstijd voor deze case (minuten)</label><input id="oPlannerMinutes" min="0" placeholder="Bijvoorbeeld 5" step="0.5" type="number"></div><div class="field"><label for="oNotes">Korte evaluatie</label><textarea placeholder="Wat bleek de oorzaak, wat heeft geholpen en paste het eerdere advies?" id="oNotes"></textarea></div><button class="btn primary case-write" type="button" onclick="saveOutcome()"><svg class="ws-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m5 12 4 4L19 6"/></svg>Uitkomst opslaan</button></div></div>
+</div><div class="ws-case-sidebar"><div class="card" id="caseSide"></div><div class="card" id="assignmentCard"><h3>Toegewezen monteur</h3><div class="field"><label for="assignedTo">Monteur</label><select id="assignedTo"></select></div><button class="btn full case-write" type="button" id="assignBtn" onclick="assignCase()"><svg class="ws-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="9" cy="8" r="3"/><path d="M3 21v-3a6 6 0 0 1 12 0v3M16 5a3 3 0 0 1 0 6M18 15a5 5 0 0 1 3 5"/></svg>Toewijzing opslaan</button><div class="ws-form-help" id="assignmentHelp"></div></div></div></div></section>
 <section class="hidden" id="pilotHubView">
 <div class="cc-pagehead"><div><div class="eyebrow">Pilot</div><h2>Pilot &amp; resultaten</h2><div class="sub">Voortgang, effect en managementrapportage op één plek.</div></div><button class="btn" onclick="loadPilotHub()">Vernieuwen</button></div>
 <div class="cc-metrics section">
-<div class="cc-metric"><div class="cc-metricicon">✓</div><div><small>First-time-fix</small><b id="phFTF">—</b><span>geregistreerde outcomes</span></div></div>
-<div class="cc-metric"><div class="cc-metricicon">↺</div><div><small>Tweede bezoek</small><b id="phSecond">—</b><span>geregistreerde outcomes</span></div></div>
-<div class="cc-metric"><div class="cc-metricicon">⌁</div><div><small>Remote opgelost</small><b id="phRemote">—</b><span>geregistreerde outcomes</span></div></div>
-<div class="cc-metric readiness"><div class="cc-metricicon">€</div><div><small>Projectie netto / maand</small><b id="phNet">—</b><span>op basis van aannames</span></div></div>
+<div class="cc-metric"><div class="cc-metricicon"><svg class="ws-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"/><path d="m8 12 3 3 5-6"/></svg></div><div><small>First-time-fix</small><b id="phFTF">—</b><span>geregistreerde uitkomsten</span></div></div>
+<div class="cc-metric"><div class="cc-metricicon"><svg class="ws-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M20 8V3l-3 3a8 8 0 0 0-13 5M4 16v5l3-3a8 8 0 0 0 13-5M20 3h-5M4 21h5"/></svg></div><div><small>Tweede bezoek</small><b id="phSecond">—</b><span>geregistreerde uitkomsten</span></div></div>
+<div class="cc-metric"><div class="cc-metricicon"><svg class="ws-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M6 19a5 5 0 0 1-1-10 7 7 0 0 1 13-2 6 6 0 0 1 1 12z"/></svg></div><div><small>Remote opgelost</small><b id="phRemote">—</b><span>geregistreerde uitkomsten</span></div></div>
+<div class="cc-metric readiness"><div class="cc-metricicon"><svg class="ws-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M18 5a7 7 0 0 0-11 7 7 7 0 0 0 11 7M4 10h11M4 14h10"/></svg></div><div><small>Projectie netto / maand</small><b id="phNet">—</b><span>op basis van aannames</span></div></div>
 </div>
 <div class="cc-hubgrid section">
-<button class="cc-hubcard" onclick="show('metrics')"><span class="cc-hubicon">◒</span><div><b>KPI's &amp; businesscase</b><small>Bekijk operationele resultaten, datakwaliteit en economische impact.</small></div><i>→</i></button>
-<button class="cc-hubcard" onclick="show('pilot')"><span class="cc-hubicon">◎</span><div><b>Pilot beheren</b><small>Nulmeting, doelen, snapshots en looptijd van de actieve pilot.</small></div><i>→</i></button>
-<button class="cc-hubcard" onclick="show('report')"><span class="cc-hubicon">▤</span><div><b>Directierapport</b><small>Samenvatting, conclusies en rapportage voor besluitvorming.</small></div><i>→</i></button>
+<button class="cc-hubcard" onclick="show('metrics')"><span class="cc-hubicon"><svg class="ws-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 3v17h17M8 15v-4M13 15V7M18 15v-7"/></svg></span><div><b>KPI's &amp; businesscase</b><small>Bekijk operationele resultaten, datakwaliteit en economische impact.</small></div><i>→</i></button>
+<button class="cc-hubcard" onclick="show('pilot')"><span class="cc-hubicon"><svg class="ws-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"/><path d="M12 6v6l4 2"/></svg></span><div><b>Pilot beheren</b><small>Nulmeting, doelen, snapshots en looptijd van de actieve pilot.</small></div><i>→</i></button>
+<button class="cc-hubcard" onclick="show('report')"><span class="cc-hubicon"><svg class="ws-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8zM14 2v6h6M8 12h8M8 16h5"/></svg></span><div><b>Directierapport</b><small>Samenvatting, conclusies en rapportage voor besluitvorming.</small></div><i>→</i></button>
 </div>
 <div class="card section cc-pilot-context"><div><span class="cc-kicker">ACTIEVE PILOT</span><h3 id="phPilotName">Pilotstatus laden…</h3><p class="sub" id="phPilotStatus">—</p></div><button class="cc-textbtn" onclick="show('pilot')">Open pilotbeheer →</button></div>
 </section>
-<section class="hidden" id="metricsView"><div class="top"><div><div class="eyebrow">Pilotmeting</div><h2>KPI's</h2></div></div><div class="grid4"><div class="card metric"><small>Totaal</small><b id="kTotal">0</b></div><div class="card metric"><small>Klantintakes</small><b id="kPublic">0</b></div><div class="card metric"><small>Gem. intake</small><b id="kIntake">0s</b></div><div class="card metric"><small>Compleet bij intake</small><b id="kComplete">0%</b></div></div><div class="grid4 section"><div class="card metric"><small>First-time-fix</small><b id="kFTF">0%</b></div><div class="card metric"><small>Tweede bezoek</small><b id="kSecond">0%</b></div><div class="card metric"><small>Voorkombare tweede rit</small><b id="kPreventable">0%</b></div><div class="card metric"><small>Remote opgelost</small><b id="kRemote">0%</b></div></div><div class="card section"><div class="kv"><span>Planbaar %</span><b id="kScheduled">0%</b></div><div class="kv"><span>Outcomes geregistreerd</span><b id="kOutcomes">0</b></div><div class="sub">De FTF-percentages worden alleen berekend op cases waarvoor een outcome is geregistreerd.</div></div>
+<section class="hidden" id="metricsView"><div class="top"><div><div class="eyebrow">Pilotmeting</div><h2>KPI's</h2></div></div><div class="grid4"><div class="card metric"><small>Totaal</small><b id="kTotal">0</b></div><div class="card metric"><small>Klantintakes</small><b id="kPublic">0</b></div><div class="card metric"><small>Gem. intake</small><b id="kIntake">0s</b></div><div class="card metric"><small>Compleet bij intake</small><b id="kComplete">0%</b></div></div><div class="grid4 section"><div class="card metric"><small>First-time-fix</small><b id="kFTF">0%</b></div><div class="card metric"><small>Tweede bezoek</small><b id="kSecond">0%</b></div><div class="card metric"><small>Voorkombare tweede rit</small><b id="kPreventable">0%</b></div><div class="card metric"><small>Remote opgelost</small><b id="kRemote">0%</b></div></div><div class="card section"><div class="kv"><span>Planbaar %</span><b id="kScheduled">0%</b></div><div class="kv"><span>Uitkomsten geregistreerd</span><b id="kUitkomsten">0</b></div><div class="sub">De FTF-percentages worden alleen berekend op cases waarvoor een outcome is geregistreerd.</div></div>
 <div class="section"><div class="eyebrow">Economische impact</div><h2 style="font-size:22px">Businesscase</h2><div class="sub">Gemeten besparing en geschatte waarde staan bewust apart.</div></div>
 <div class="grid4 section">
 <div class="card metric"><small>Gemeten plannerwaarde</small><b id="ePlanner">€0</b></div>
 <div class="card metric"><small>Geschatte remote ritwaarde</small><b id="eRemote">€0</b></div>
 <div class="card metric"><small>Vermijdbare verspilling gezien</small><b id="eWaste">€0</b></div>
-<div class="card metric"><small>Projected netto / maand</small><b id="eNet">€0</b></div>
+<div class="card metric"><small>Verwachte netto / maand</small><b id="eNet">€0</b></div>
 </div>
 <div class="grid2 section">
 <div class="card"><h3>Aannames — transparant en aanpasbaar</h3>
-<div class="field"><label>Baseline planner-/intaketijd per case (min)</label><input id="aBaselinePlanner" step="0.5" type="number"/></div>
-<div class="field"><label>Planner/backoffice kostwaarde (€ / uur)</label><input id="aPlannerRate" step="1" type="number"/></div>
-<div class="field"><label>Monteur kostwaarde (€ / uur)</label><input id="aTechRate" step="1" type="number"/></div>
-<div class="field"><label>Gemiddelde duur extra locatiebezoek (min)</label><input id="aVisitMinutes" step="5" type="number"/></div>
-<div class="field"><label>Gemiddelde retourkilometers per extra rit</label><input id="aKm" step="1" type="number"/></div>
-<div class="field"><label>Kostprijs per km (€)</label><input id="aKmCost" step="0.01" type="number"/></div>
-<div class="field"><label>Referentie softwareprijs (€ / maand)</label><input id="aSoftware" step="1" type="number"/></div>
-<div class="field"><label>Cases per maand voor projectie</label><input id="aVolume" step="1" type="number"/></div>
+<div class="field"><label for="aBaselinePlanner">Baseline planner-/intaketijd per case (min)</label><input id="aBaselinePlanner" step="0.5" type="number"/></div>
+<div class="field"><label for="aPlannerRate">Planner/backoffice kostwaarde (€ / uur)</label><input id="aPlannerRate" step="1" type="number"/></div>
+<div class="field"><label for="aTechRate">Monteur kostwaarde (€ / uur)</label><input id="aTechRate" step="1" type="number"/></div>
+<div class="field"><label for="aVisitMinutes">Gemiddelde duur extra locatiebezoek (min)</label><input id="aVisitMinutes" step="5" type="number"/></div>
+<div class="field"><label for="aKm">Gemiddelde retourkilometers per extra rit</label><input id="aKm" step="1" type="number"/></div>
+<div class="field"><label for="aKmCost">Kostprijs per km (€)</label><input id="aKmCost" step="0.01" type="number"/></div>
+<div class="field"><label for="aSoftware">Softwarekosten voor berekening (€ / maand)</label><input id="aSoftware" step="1" type="number"/><div class="ws-form-help">Dit is een rekenaanname. Het instellen van dit bedrag activeert geen betaling of abonnement.</div></div>
+<div class="field"><label for="aVolume">Cases per maand voor projectie</label><input id="aVolume" step="1" type="number"/></div>
 <button class="btn primary" onclick="saveEconomicAssumptions()">Aannames opslaan</button>
 </div>
 <div class="card"><h3>Berekening</h3>
 <div class="kv"><span>Planner-minuten bespaard</span><b id="ePlannerMinutes">0</b></div>
 <div class="kv"><span>Remote opgeloste cases</span><b id="eRemoteCount">0</b></div>
 <div class="kv"><span>Voorkombare tweede bezoeken gezien</span><b id="ePreventableCount">0</b></div>
-<div class="kv"><span>Projected bruto / maand</span><b id="eGross">€0</b></div>
-<div class="kv"><span>Software referentie</span><b id="eSoftware">€0</b></div>
+<div class="kv"><span>Verwachte bruto / maand</span><b id="eGross">€0</b></div>
+<div class="kv"><span>Softwarekosten in berekening</span><b id="eSoftware">€0</b></div>
 <div class="kv"><span>Break-even</span><b id="eBreakEven">—</b></div>
 <div class="sub section"><b>Gemeten:</b> plannerwaarde gebruikt alleen cases waar werkelijke plannertijd is geregistreerd.<br/><br/><b>Geschat:</b> remote ritwaarde gebruikt instelbare tijd-, monteur- en kilometerkosten.<br/><br/><b>Verspilling:</b> voorkombare tweede ritten zijn opportunity loss, niet gerealiseerde besparing.</div>
 </div>
@@ -377,20 +275,20 @@ main{padding:0 34px 70px;max-width:1640px}.cc-workspacebar{height:62px;margin-bo
 <h3>Start een nieuwe pilot</h3>
 <div class="grid2">
 <div>
-<div class="field"><label>Pilotnaam</label><input id="pName" value="Launch Partner Pilot"/></div>
-<div class="field"><label>Startdatum</label><input id="pStart" type="date"/></div>
-<div class="field"><label>Einddatum</label><input id="pEnd" type="date"/></div>
-<div class="field"><label>Nulmeting planner-/voorbereidingstijd (min)</label><input id="pBasePlanner" step="0.5" type="number" value="13"/></div>
-<div class="field"><label>Nulmeting first-time-fix (%)</label><input id="pBaseFTF" step="0.1" type="number" value="70"/></div>
-<div class="field"><label>Nulmeting tweede bezoek (%)</label><input id="pBaseSecond" step="0.1" type="number" value="20"/></div>
-<div class="field"><label>Nulmeting remote opgelost (%)</label><input id="pBaseRemote" step="0.1" type="number" value="5"/></div>
+<div class="field"><label for="pName">Pilotnaam</label><input id="pName" value="Launch Partner Pilot"/></div>
+<div class="field"><label for="pStart">Startdatum</label><input id="pStart" type="date"/></div>
+<div class="field"><label for="pEnd">Einddatum</label><input id="pEnd" type="date"/></div>
+<div class="field"><label for="pBasePlanner">Nulmeting planner-/voorbereidingstijd (min)</label><input id="pBasePlanner" step="0.5" type="number" value="13"/></div>
+<div class="field"><label for="pBaseFTF">Nulmeting first-time-fix (%)</label><input id="pBaseFTF" step="0.1" type="number" value="70"/></div>
+<div class="field"><label for="pBaseSecond">Nulmeting tweede bezoek (%)</label><input id="pBaseSecond" step="0.1" type="number" value="20"/></div>
+<div class="field"><label for="pBaseRemote">Nulmeting remote opgelost (%)</label><input id="pBaseRemote" step="0.1" type="number" value="5"/></div>
 </div>
 <div>
-<div class="field"><label>Doel planner-/voorbereidingstijd (min)</label><input id="pTargetPlanner" step="0.5" type="number" value="7"/></div>
-<div class="field"><label>Doel first-time-fix (%)</label><input id="pTargetFTF" step="0.1" type="number" value="80"/></div>
-<div class="field"><label>Doel tweede bezoek (%)</label><input id="pTargetSecond" step="0.1" type="number" value="12"/></div>
-<div class="field"><label>Doel remote opgelost (%)</label><input id="pTargetRemote" step="0.1" type="number" value="10"/></div>
-<div class="field"><label>Notities / scope</label><textarea id="pNotes">Pilot op servicecases laadinfra en PV.</textarea></div>
+<div class="field"><label for="pTargetPlanner">Doel planner-/voorbereidingstijd (min)</label><input id="pTargetPlanner" step="0.5" type="number" value="7"/></div>
+<div class="field"><label for="pTargetFTF">Doel first-time-fix (%)</label><input id="pTargetFTF" step="0.1" type="number" value="80"/></div>
+<div class="field"><label for="pTargetSecond">Doel tweede bezoek (%)</label><input id="pTargetSecond" step="0.1" type="number" value="12"/></div>
+<div class="field"><label for="pTargetRemote">Doel remote opgelost (%)</label><input id="pTargetRemote" step="0.1" type="number" value="10"/></div>
+<div class="field"><label for="pNotes">Notities / scope</label><textarea id="pNotes">Pilot op servicecases laadinfra en PV.</textarea></div>
 </div>
 </div>
 <button class="btn primary" onclick="startPilot()">Pilot starten</button>
@@ -399,8 +297,8 @@ main{padding:0 34px 70px;max-width:1640px}.cc-workspacebar{height:62px;margin-bo
 <div class="grid4">
 <div class="card metric"><small>Voortgang</small><b id="pProgress">0%</b></div>
 <div class="card metric"><small>Dagen resterend</small><b id="pRemaining">0</b></div>
-<div class="card metric"><small>Outcomes</small><b id="pOutcomes">0</b></div>
-<div class="card metric"><small>Projected netto / maand</small><b id="pProjectedNet">€0</b></div>
+<div class="card metric"><small>Uitkomsten</small><b id="pUitkomsten">0</b></div>
+<div class="card metric"><small>Verwachte netto / maand</small><b id="pVerwachteNet">€0</b></div>
 </div>
 <div class="grid2 section">
 <div class="card"><h3>Voor versus nu</h3><div id="pilotCompare"></div></div>
@@ -417,15 +315,15 @@ main{padding:0 34px 70px;max-width:1640px}.cc-workspacebar{height:62px;margin-bo
 <section class="hidden" id="beheerView">
 <div class="cc-pagehead"><div><div class="eyebrow">Beheer</div><h2>Instellingen &amp; beheer</h2><div class="sub">Functies die je niet tijdens het dagelijkse casewerk nodig hebt.</div></div></div>
 <div class="cc-managegrid section">
-<button class="cc-managecard" id="manageOrganizations" onclick="show('owner')"><span>◆</span><div><b>Organisaties</b><small>Klantomgevingen openen, aanmaken of pauzeren.</small></div><i>→</i></button>
-<button class="cc-managecard" id="manageTeam" onclick="show('team')"><span>○</span><div><b>Team</b><small>Bekijk gebruikers binnen de actieve organisatie.</small></div><i>→</i></button>
-<button class="cc-managecard" id="manageProduct" onclick="show('product')"><span>⚙</span><div><b>Productinstellingen</b><small>Branding, accounts, wachtwoord, export en reset.</small></div><i>→</i></button>
-<button class="cc-managecard" id="manageSystem" onclick="show('system')"><span>●</span><div><b>Systeemstatus</b><small>Database, opslag, runtime en versie controleren.</small></div><i>→</i></button>
-<button class="cc-managecard" id="manageAudit" onclick="show('audit')"><span>≡</span><div><b>Auditlog</b><small>Bekijk recente activiteiten in de actieve omgeving.</small></div><i>→</i></button>
-<button class="cc-managecard" id="manageOnboarding" onclick="openOnboardingFromManage()"><span>＋</span><div><b>Onboarding</b><small>Servicefocus, merken, pilotdoelen en startinstellingen.</small></div><i>→</i></button>
+<button class="cc-managecard" id="manageOrganizations" onclick="show('owner')"><span><svg class="ws-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 7h2M14 7h2M8 11h2M14 11h2M8 15h2M14 15h2M10 21v-3h4v3"/></svg></span><div><b>Organisaties</b><small>Klantomgevingen openen, aanmaken of pauzeren.</small></div><i>→</i></button>
+<button class="cc-managecard" id="manageTeam" onclick="show('team')"><span><svg class="ws-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="9" cy="8" r="3"/><path d="M3 21v-3a6 6 0 0 1 12 0v3M16 5a3 3 0 0 1 0 6M18 15a5 5 0 0 1 3 5"/></svg></span><div><b>Team</b><small>Bekijk gebruikers binnen de actieve organisatie.</small></div><i>→</i></button>
+<button class="cc-managecard" id="manageProduct" onclick="show('product')"><span><svg class="ws-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m10 3-.6 2.4-2 .9-2.2-.7-2 3.4 1.6 1.8v2.4L3.2 15l2 3.4 2.2-.7 2 .9.6 2.4h4l.6-2.4 2-.9 2.2.7 2-3.4-1.6-1.8v-2.4l1.6-1.8-2-3.4-2.2.7-2-.9L14 3z"/><circle cx="12" cy="12" r="3"/></svg></span><div><b>Productinstellingen</b><small>Branding, accounts, wachtwoord, export en reset.</small></div><i>→</i></button>
+<button class="cc-managecard" id="manageSystem" onclick="show('system')"><span><svg class="ws-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m12 2 8 3v6c0 5-4 9-8 11-4-2-8-6-8-11V5zM8 11l3 3 5-6"/></svg></span><div><b>Systeemstatus</b><small>Database, opslag, runtime en versie controleren.</small></div><i>→</i></button>
+<button class="cc-managecard" id="manageAudit" onclick="show('audit')"><span><svg class="ws-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8zM14 2v6h6M8 12h8M8 16h5"/></svg></span><div><b>Auditlog</b><small>Bekijk recente activiteiten in de actieve omgeving.</small></div><i>→</i></button>
+<button class="cc-managecard" id="manageOnboarding" onclick="openOnboardingFromManage()"><span><svg class="ws-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M9 7h6M9 11h6M9 15h3M16 17l2 2 4-4"/></svg></span><div><b>Onboarding</b><small>Servicefocus, merken, pilotdoelen en startinstellingen.</small></div><i>→</i></button>
 </div>
 </section>
-<section class="hidden" id="productView"><div class="top"><div><div class="eyebrow">Beheer</div><h2>Productinstellingen</h2><div class="sub">Branding, accounts, export en veilige gegevensreset.</div></div><div><span class="pill" id="versionBadge"></span></div></div><div class="grid2 section"><div class="card"><h3>Branding &amp; klantportaal</h3><div class="field"><label>Productnaam / label</label><input id="pbBrandName"/></div><div class="field"><label>Accentkleur</label><input id="pbAccent" placeholder="#62d0ff" type="text"/></div><div class="field"><label>Support e-mail</label><input id="pbSupportEmail" type="email"/></div><div class="field"><label>Privacyverklaring URL</label><input id="pbPrivacyUrl" placeholder="https://bedrijf.nl/privacy" type="url"/></div><div class="field"><label>Titel klantportaal</label><input id="pbPortalTitle"/></div><button class="btn primary" onclick="saveBranding()">Branding opslaan</button></div><div class="card"><h3>Eigen wachtwoord</h3><div class="field"><label>Huidig wachtwoord</label><input id="pwCurrent" type="password"/></div><div class="field"><label>Nieuw wachtwoord</label><input id="pwNew" placeholder="min. 12 tekens" type="password"/></div><button class="btn" onclick="changeOwnPassword()">Wachtwoord wijzigen</button></div></div><div class="card section" id="accountAdminCard"><h3>Accountbeheer</h3><div id="accountList"></div><div class="section grid2"><div><div class="field"><label>Naam</label><input id="accName"/></div><div class="field"><label>E-mail</label><input id="accEmail" type="email"/></div></div><div><div class="field"><label>Rol</label><select id="accRole"><option value="planner">Planner</option><option value="technician">Monteur</option><option value="admin">Admin</option></select></div><div class="field"><label>Tijdelijk wachtwoord</label><input id="accPassword" placeholder="min. 12 tekens" type="password"/></div></div></div><button class="btn primary" onclick="createAccount()">Account toevoegen</button></div><div class="grid2 section"><div class="card"><h3>Export / backup</h3><div class="sub">Operationele JSON-export zonder wachtwoordhashes en zonder bestandbytes.</div><div class="section"><button class="btn primary" onclick="downloadOperationalExport()">JSON-export downloaden</button></div></div><div class="card"><h3>Pilot reset</h3><div class="sub">Verwijdert cases, notities, bijlagen, audit en pilotdata. Accounts en bedrijfsinstellingen blijven bestaan.</div><div class="field"><label>Typ exact: RESET PILOT DATA</label><input id="resetConfirm"/></div><button class="btn" onclick="resetPilotData()">Pilotdata resetten</button></div></div></section>
+<section class="hidden" id="productView"><div class="top"><div><div class="eyebrow">Beheer</div><h2>Productinstellingen</h2><div class="sub">Branding, accounts, export en veilige gegevensreset.</div></div><div><span class="pill" id="versionBadge"></span></div></div><div class="grid2 section"><div class="card"><h3>Branding &amp; klantportaal</h3><div class="field"><label for="pbBrandName">Productnaam / label</label><input id="pbBrandName"/></div><div class="field"><label for="pbAccent">Accentkleur</label><input id="pbAccent" placeholder="#62d0ff" type="text"/></div><div class="field"><label for="pbSupportEmail">Support e-mail</label><input id="pbSupportEmail" type="email"/></div><div class="field"><label for="pbPrivacyUrl">Privacyverklaring URL</label><input id="pbPrivacyUrl" placeholder="https://bedrijf.nl/privacy" type="url"/></div><div class="field"><label for="pbPortalTitle">Titel klantportaal</label><input id="pbPortalTitle"/></div><button class="btn primary" onclick="saveBranding()">Branding opslaan</button></div><div class="card"><h3>Eigen wachtwoord</h3><div class="field"><label for="pwCurrent">Huidig wachtwoord</label><input id="pwCurrent" type="password" autocomplete="current-password"/></div><div class="field"><label for="pwNew">Nieuw wachtwoord</label><input id="pwNew" placeholder="min. 12 tekens" type="password" autocomplete="new-password"/></div><button class="btn" onclick="changeOwnPassword()">Wachtwoord wijzigen</button></div></div><div class="card section" id="accountAdminCard"><h3>Accountbeheer</h3><div id="accountList" class="ws-account-list"></div><div class="section grid2"><div><div class="field"><label for="accName">Naam</label><input id="accName"/></div><div class="field"><label for="accEmail">E-mail</label><input id="accEmail" type="email"/></div></div><div><div class="field"><label for="accRole">Rol</label><select id="accRole"><option value="planner">Planner</option><option value="technician">Monteur</option><option value="admin">Bedrijfsbeheerder</option></select></div><div class="field"><label for="accPassword">Tijdelijk wachtwoord</label><input id="accPassword" placeholder="min. 12 tekens" type="password"/></div></div></div><button class="btn primary" onclick="createAccount()">Account toevoegen</button></div><div class="grid2 section"><div class="card"><h3>Export &amp; herstelgegevens</h3><div class="sub">Bewaar dossiers en private bijlagen samen, inclusief controlewaarden voor herstel.</div><div class="section ws-backup-actions"><a class="btn primary" href="/api/export?format=zip" download>Complete backup downloaden</a><a class="btn" href="/api/export?download=1" download>Alleen gegevens (JSON)</a></div><p class="ws-backup-info">De complete backup bevat ook bijlagebestanden. Wachtwoorden en sessies zijn uitgesloten. Bewaar de download privé. Maximaal 64 MB en 250 bijlagen per backup.</p></div><details class="ws-danger"><summary><svg class="ws-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m12 3 10 17H2zM12 9v4M12 17h.01"/></svg>Gegevensreset</summary><div class="ws-danger-body"><h3>Pilotgegevens wissen</h3><div class="sub">Verwijdert cases, notities, bijlagen, audit en pilotdata. Accounts en bedrijfsinstellingen blijven bestaan.</div><div class="field"><label for="resetConfirm">Typ exact: RESET PILOT DATA</label><input id="resetConfirm"/></div><button class="btn btn-danger" onclick="resetPilotData()">Pilotdata resetten</button></div></details></div></section>
 <section class="hidden" id="systemView">
 <div class="top">
 <div>
@@ -445,7 +343,7 @@ main{padding:0 34px 70px;max-width:1640px}.cc-workspacebar{height:62px;margin-bo
 <div class="card">
 <h3>Gebruik &amp; runtime</h3>
 <div class="kv"><span>Uptime</span><span id="sysUptime">—</span></div>
-<div class="kv"><span>Cases</span><span id="sysCases">—</span></div>
+<div class="kv"><span>Servicedossiers</span><span id="sysCases">—</span></div>
 <div class="kv"><span>Actieve gebruikers</span><span id="sysUsers">—</span></div>
 <div class="kv"><span>Actieve sessies</span><span id="sysSessions">—</span></div>
 <div class="kv"><span>Bijlagen</span><span id="sysAttachments">—</span></div>
@@ -462,6 +360,18 @@ main{padding:0 34px 70px;max-width:1640px}.cc-workspacebar{height:62px;margin-bo
 <div class="sub section">Dit scherm ververst automatisch elke 60 seconden zolang het geopend is. Een oude foutmelding betekent niet automatisch dat het systeem nu defect is; de actuele status bovenaan is leidend.</div>
 </div>
 </div>
+<div class="card section ws-analysis-health" id="analysisHealthCard">
+<div class="eyebrow">Slimme analyse</div><h3 id="analysisHealthState">Analyse controleren…</h3>
+<div class="sub" id="analysisHealthInfo"></div>
+<details class="ws-analysis-questions"><summary>Gecontroleerde storingsscenario’s</summary><ul id="analysisHealthChecks"></ul></details>
+<div class="ws-analysis-footnote">Technische kennisprofielen · €0 extra · geen extern taalmodel</div>
+<details class="ws-analysis-editor"><summary>Test een fictieve melding</summary>
+<p class="sub">Bekijk een advies. Deze test slaat geen dossier op en verstuurt geen e-mail.</p>
+<div class="grid2"><div class="field"><label for="analysisTryType">Installatietype</label><select id="analysisTryType"><option>Laadpaal</option><option>Zonnepanelen</option><option>Thuisbatterij</option><option>Elektro</option></select></div><div class="field"><label for="analysisTryBrand">Merk / fabrikant</label><input id="analysisTryBrand" maxlength="500" value="Easee"></div></div>
+<div class="field"><label for="analysisTryProblem">Fictieve klachtomschrijving</label><textarea id="analysisTryProblem" rows="3" maxlength="8000">De Easee app toont het laadpunt offline. Het is nog onbekend of laden werkt.</textarea></div>
+<button class="btn primary" type="button" onclick="tryAnalysis()">Analyse testen</button>
+<div class="ws-analysis-preview hidden" id="analysisTryResult" aria-live="polite"></div>
+</details></div>
 </section>
 <section class="hidden" id="ownerView">
 <div class="cc-pagehead">
@@ -473,10 +383,10 @@ main{padding:0 34px 70px;max-width:1640px}.cc-workspacebar{height:62px;margin-bo
 <button class="btn" onclick="loadOwnerConsole()">Vernieuwen</button>
 </div>
 <div class="cc-metrics cc-owner-metrics">
-<div class="cc-metric"><div class="cc-metricicon">◆</div><div><small>Organisaties</small><b id="ownOrganizations">0</b><span>totaal</span></div></div>
-<div class="cc-metric"><div class="cc-metricicon">●</div><div><small>Actief / pilot</small><b id="ownActive">0</b><span>in gebruik</span></div></div>
-<div class="cc-metric attention"><div class="cc-metricicon">◌</div><div><small>Onboarding</small><b id="ownOnboarding">0</b><span>nog in te richten</span></div></div>
-<div class="cc-metric"><div class="cc-metricicon">▦</div><div><small>Cases totaal</small><b id="ownCases">0</b><span>over alle organisaties</span></div></div>
+<div class="cc-metric"><div class="cc-metricicon"><svg class="ws-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 7h2M14 7h2M8 11h2M14 11h2M8 15h2M14 15h2M10 21v-3h4v3"/></svg></div><div><small>Organisaties</small><b id="ownOrganizations">0</b><span>totaal</span></div></div>
+<div class="cc-metric"><div class="cc-metricicon"><svg class="ws-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"/><path d="m8 12 3 3 5-6"/></svg></div><div><small>Actief / pilot</small><b id="ownActive">0</b><span>in gebruik</span></div></div>
+<div class="cc-metric attention"><div class="cc-metricicon"><svg class="ws-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M9 7h6M9 11h6M9 15h3M16 17l2 2 4-4"/></svg></div><div><small>Onboarding</small><b id="ownOnboarding">0</b><span>nog in te richten</span></div></div>
+<div class="cc-metric"><div class="cc-metricicon"><svg class="ws-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M3 7a2 2 0 0 1 2-2h5l2 2h7a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M3 11h18"/></svg></div><div><small>Dossiers totaal</small><b id="ownCases">0</b><span>over alle organisaties</span></div></div>
 </div>
 <div class="cc-ownergrid section">
 <div class="cc-panel">
@@ -495,25 +405,30 @@ main{padding:0 34px 70px;max-width:1640px}.cc-workspacebar{height:62px;margin-bo
 <details class="cc-createorg">
 <summary><span>＋</span> Nieuwe organisatie aanmaken</summary>
 <div class="cc-createbody">
-<div class="field"><label>Bedrijfsnaam</label><input id="ownNewName" placeholder="Installatiebedrijf BV"/></div>
-<div class="field"><label>Slug</label><input id="ownNewSlug" placeholder="installatiebedrijf"/></div>
+<div class="field"><label for="ownNewName">Bedrijfsnaam</label><input id="ownNewName" placeholder="Installatiebedrijf BV"/></div>
+<div class="field"><label for="ownNewSlug">Slug</label><input id="ownNewSlug" placeholder="installatiebedrijf"/></div>
 <div class="cc-formgrid">
-<div class="field"><label>Status</label><select id="ownNewStatus"><option value="onboarding">Onboarding</option><option value="pilot">Pilot</option><option value="active">Actief</option></select></div>
-<div class="field"><label>Plan</label><select id="ownNewPlan"><option value="pilot">Pilot</option><option value="starter">Starter</option><option value="growth">Growth</option></select></div>
+<div class="field"><label for="ownNewStatus">Status</label><select id="ownNewStatus"><option value="onboarding">Onboarding</option><option value="pilot">Pilot</option><option value="active">Actief</option></select></div>
+<div class="field"><label for="ownNewPlan">Plan</label><select id="ownNewPlan"><option value="pilot">Pilot</option><option value="starter">Starter</option><option value="growth">Growth</option></select></div>
 </div>
 <div class="cc-divider"></div>
 <span class="cc-kicker">EERSTE BEHEERDER</span>
-<div class="field"><label>Naam</label><input id="ownAdminName"/></div>
-<div class="field"><label>E-mail</label><input id="ownAdminEmail" type="email"/></div>
-<div class="field"><label>Tijdelijk wachtwoord</label><input id="ownAdminPassword" placeholder="min. 12 tekens" type="password"/></div>
+<div class="field"><label for="ownAdminName">Naam</label><input id="ownAdminName"/></div>
+<div class="field"><label for="ownAdminEmail">E-mail</label><input id="ownAdminEmail" type="email"/></div>
+<div class="field"><label for="ownAdminPassword">Tijdelijk wachtwoord</label><input id="ownAdminPassword" placeholder="min. 12 tekens" type="password"/></div>
 <button class="btn primary full" onclick="createOrganization()">Organisatie aanmaken</button>
 </div>
 </details>
 </div>
 </div>
 </section>
-<section class="hidden" id="teamView"><div class="top"><div><div class="eyebrow">Team</div><h2>Gebruikers</h2></div></div><div class="card" id="teamList"></div></section>
+<section id="supportView" class="hidden"><div class="cc-pagehead"><div><div class="eyebrow">Werkstuur ondersteuning</div><h2 id="supportTitle">We helpen je verder.</h2><div class="sub" id="supportIntro">Meld een softwareprobleem of stel een vraag. Je eigen bedrijf blijft je dagelijkse werk beheren.</div></div><button class="btn" type="button" onclick="loadSupport()">Vernieuwen</button></div><div class="cmd-support-layout section"><div class="cmd-support-list" id="supportList"></div><div class="card hidden" id="supportCreateForm"><span class="cc-kicker">NIEUWE MELDING</span><h3>Waar loop je tegenaan?</h3><div class="field"><label for="supportSubject">Onderwerp</label><input id="supportSubject" minlength="4" maxlength="180" placeholder="Bijvoorbeeld: dossier opslaan lukt niet"></div><div class="field"><label for="supportCategory">Categorie</label><select id="supportCategory"><option value="technical">Technisch probleem</option><option value="question">Vraag over gebruik</option><option value="incident">Toegang of beveiliging</option></select></div><div class="field"><label for="supportDescription">Omschrijving</label><textarea id="supportDescription" minlength="10" maxlength="6000" rows="5" placeholder="Wat wilde je doen, wat gebeurde er en welke melding zag je?" oninput="showSupportHelp()"></textarea></div><div id="supportHelp" class="cmd-support-help"></div><button class="btn primary" type="button" onclick="submitSupport()">Melding opslaan</button><p class="msg" id="supportMessage" role="status"></p></div></div></section>
+<section class="hidden" id="teamView"><div class="cc-pagehead"><div><div class="eyebrow">Jouw bedrijf · Jouw mensen</div><h2>Een sterk team.</h2><div class="sub">Beheer je bedrijfsbeheerder, planners en monteurs vanuit één werkruimte.</div></div><button id="teamAddButton" class="btn primary" type="button" onclick="openTeamCreate()">＋ Teamlid toevoegen</button></div><div class="cmd-role-strip"><span><i></i> Bedrijfsbeheerder <small>bedrijf &amp; toegang</small></span><span><i></i> Planner <small>klanten &amp; dossiers</small></span><span><i></i> Monteur <small>toegewezen werk</small></span></div><div class="cmd-team-grid section" id="teamList"></div>
+<div class="card section hidden" id="teamCreateForm"><div class="cc-panelhead"><div><span class="cc-kicker">NIEUW TEAMLID</span><h3>Toegang tot jouw bedrijf</h3></div><button class="btn" type="button" onclick="closeTeamCreate()">Sluiten</button></div><div class="grid2"><div><div class="field"><label for="teamName">Naam</label><input id="teamName" maxlength="160" autocomplete="name"></div><div class="field"><label for="teamEmail">E-mail</label><input id="teamEmail" type="email" autocomplete="email"></div></div><div><div class="field"><label for="teamRole">Rol</label><select id="teamRole"><option value="planner">Planner</option><option value="technician">Monteur</option><option value="admin">Bedrijfsbeheerder</option></select></div><div class="field"><label for="teamPassword">Tijdelijk wachtwoord</label><input id="teamPassword" type="password" autocomplete="new-password" minlength="12" placeholder="Minimaal 12 tekens"></div></div></div><p class="sub">Het nieuwe teamlid krijgt een eigen account. Deel het tijdelijke wachtwoord via een afgesproken veilige route.</p><button class="btn primary" type="button" onclick="createTeamMember()">Account aanmaken</button><p id="teamMessage" class="msg" role="status"></p></div></section>
+<section class="hidden" id="customersView"><div class="cc-pagehead"><div><div class="eyebrow">Jouw klanten</div><h2>Elk contact in beeld.</h2><div class="sub">Contactgegevens, dossierhistorie en je volgende opdracht op één plek.</div></div><button class="btn primary" id="customerAddButton" type="button" onclick="editCustomer()">＋ Klant toevoegen</button></div><div class="cmd-customer-toolbar"><label class="cc-search" for="customerSearch"><input type="search" id="customerSearch" placeholder="Zoek naam, e-mail, telefoon of plaats…" oninput="renderCustomers()"></label><label class="cmd-archive-filter" for="customerShowArchived"><input id="customerShowArchived" type="checkbox" onchange="renderCustomers()"> Toon archief</label><span class="sub" id="customerCount"></span></div><div class="cmd-customer-layout section"><div id="customerList" class="cmd-customer-list"></div><div class="card hidden cmd-customer-editor" id="customerEditor"><div class="cc-panelhead"><h3 id="customerEditorTitle">Nieuwe klant</h3><button class="btn" type="button" onclick="closeCustomerEditor()">Sluiten</button></div><div class="field"><label for="customerName">Naam / bedrijfsnaam</label><input id="customerName" maxlength="160" autocomplete="name"></div><div class="grid2"><div class="field"><label for="customerEmail">E-mail</label><input id="customerEmail" type="email" maxlength="254" autocomplete="email"></div><div class="field"><label for="customerPhone">Telefoon</label><input id="customerPhone" type="tel" maxlength="60" autocomplete="tel"></div></div><div class="field"><label for="customerAddress">Adres</label><input id="customerAddress" maxlength="240" autocomplete="street-address"></div><div class="grid2"><div class="field"><label for="customerPostal">Postcode</label><input id="customerPostal" maxlength="30" autocomplete="postal-code"></div><div class="field"><label for="customerCity">Plaats</label><input id="customerCity" maxlength="100" autocomplete="address-level2"></div></div><div class="field"><label for="customerNotes">Interne contactnotitie</label><textarea id="customerNotes" maxlength="3000" rows="3"></textarea></div><button class="btn primary" type="button" onclick="saveCustomer()">Klant opslaan</button><p class="msg" id="customerMessage" role="status"></p></div></div></section>
 <section class="hidden" id="auditView"><div class="top"><div><div class="eyebrow">Audit</div><h2>Activiteit</h2></div></div><div class="card" id="auditList"></div></section>
 </main></div>
-<div class="modal hidden" id="newModal"><div class="modalbox"><h3>Nieuwe case</h3><div class="grid2"><div><div class="field"><label>Klant</label><input id="nCustomer" placeholder="Klantnaam"/></div><div class="field"><label>Plaats</label><input id="nCity" placeholder="Plaats"/></div><div class="field"><label>Type</label><select id="nType" onchange="plannerBrands()"><option>Laadpaal</option><option>Zonnepanelen</option><option>Thuisbatterij</option><option>Elektro</option></select></div><div class="field"><label>Merk/fabrikant</label><select id="nManufacturer"></select></div><div class="field"><label>Model (indien bekend)</label><input id="nModel" placeholder="bijv. Charge Lite / SE8K-RWS"/></div><div class="field"><label>Serienummer (indien bekend)</label><input id="nSerial"/></div></div><div><div class="field"><label>Melding</label><textarea id="nProblem" placeholder="Beschrijf de storing zo concreet mogelijk"></textarea></div></div></div><div style="text-align:right"><button class="btn" onclick="newModal.classList.add('hidden')">Annuleren</button> <button class="btn primary" onclick="createCase()">Aanmaken</button></div></div></div>
-<script src="/app.js"></script></body></html>
+<div class="modal hidden" id="newModal" role="dialog" aria-modal="true" aria-labelledby="newCaseTitle"><div class="modalbox"><div class="ws-modal-head"><div><div class="eyebrow">Servicedossier</div><h3 id="newCaseTitle">Nieuw dossier</h3></div><button class="ws-iconbutton" type="button" aria-label="Venster sluiten" onclick="closeNew()"><svg class="ws-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg></button></div><div class="grid2"><div><div class="field"><label for="nCustomer">Klant</label><input id="nCustomer" placeholder="Klantnaam"/></div><input id="nCustomerId" type="hidden"><div class="field"><label for="nCity">Plaats</label><input id="nCity" placeholder="Plaats"/></div><div class="field"><label for="nEmail">E-mail klant</label><input id="nEmail" type="email"/></div><div class="field"><label for="nPhone">Telefoon klant</label><input id="nPhone" type="tel"/></div><div class="field"><label for="nType">Type</label><select id="nType" onchange="plannerBrands()"><option>Laadpaal</option><option>Zonnepanelen</option><option>Thuisbatterij</option><option>Elektro</option></select></div><div class="field"><label for="nManufacturer">Merk/fabrikant</label><select id="nManufacturer"></select></div><div class="field"><label for="nModel">Model (indien bekend)</label><input id="nModel" placeholder="bijv. Charge Lite / SE8K-RWS"/></div><div class="field"><label for="nSerial">Serienummer (indien bekend)</label><input id="nSerial"/></div></div><div><div class="field"><label for="nProblem">Melding</label><textarea id="nProblem" placeholder="Beschrijf de storing zo concreet mogelijk"></textarea></div></div></div><div class="ws-modal-footer"><button class="btn" type="button" onclick="closeNew()">Annuleren</button> <button class="btn primary" type="button" onclick="createCase()">Dossier aanmaken</button></div></div></div>
+<script src="/app.js"></script>
+<script src="/refinements-v203.js"></script>
+<script src="/command-v210.js"></script></body></html>
